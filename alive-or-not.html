@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alive or Not</title>
+<meta name="description" content="A 50-question field-journal quiz sorting things into living or non-living.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪴</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --cover:#241a10;
+    --cover-deep:#170f08;
+    --ink:#f1e7d2;
+    --ink-dim:#c6b697;
+    --ink-faint:#7c6a4f;
+    --living:#84ac64;
+    --nonliving:#7f96a8;
+    --correct:#e5c250;
+    --wrong:#df6a52;
+    --brass:#c9a53f;
+    --brass-dark:#8a6c25;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, rgba(255,255,255,0.05), transparent 60%),
+      radial-gradient(ellipse 90% 60% at 85% 110%, rgba(0,0,0,0.4), transparent 60%),
+      var(--cover);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100dvh;
+    padding:22px 16px 26px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  body::before, body::after{
+    content:"";
+    position:fixed;
+    left:0; right:0;
+    height:10px;
+    background:linear-gradient(180deg, var(--brass), var(--brass-dark));
+    box-shadow:0 0 0 1px rgba(0,0,0,0.3) inset;
+    z-index:5;
+  }
+  body::before{ top:0; }
+  body::after{ bottom:0; }
+
+  .grain{
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:0.045;
+    background-image:radial-gradient(circle, #fff 1px, transparent 1px);
+    background-size:3px 3px;
+    z-index:1;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:640px;
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:12px;
+  }
+
+  header{ text-align:center; }
+  .breadcrumb{
+    display:inline-block;
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:0.82rem;
+    font-weight:500;
+    color:var(--ink-dim);
+    text-decoration:none;
+    margin-bottom:10px;
+    border-bottom:1px solid transparent;
+  }
+  .breadcrumb:hover{ color:var(--ink); border-bottom-color:var(--ink-faint); }
+  .breadcrumb:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin:0 0 2px;
+  }
+  h1{
+    font-family:"Frank Ruhl Libre", Georgia, serif;
+    font-weight:700;
+    font-size:clamp(2.4rem, 7.5vw, 3.3rem);
+    margin:0;
+    line-height:1;
+    color:var(--ink);
+    text-shadow:0 1px 0 rgba(0,0,0,0.4);
+  }
+  .subtitle{
+    color:var(--ink-dim);
+    font-size:0.92rem;
+    margin-top:6px;
+  }
+
+  .status-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px;
+    border:1px dashed var(--ink-faint);
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .chip b{ color:var(--ink); font-weight:600; }
+  .progress-track{
+    position:relative;
+    flex:1;
+    height:6px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.07);
+    overflow:hidden;
+    min-width:60px;
+  }
+  .progress-fill{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(90deg, var(--living), var(--nonliving));
+    border-radius:999px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.35s ease;
+  }
+
+  /* ---- panels / card ---- */
+  .panel, .card{
+    border:2px solid rgba(201,165,63,0.35);
+    border-radius:16px;
+    padding:30px 24px 26px;
+    text-align:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15));
+    position:relative;
+  }
+  .panel::before, .panel::after, .card::before, .card::after{
+    content:"";
+    position:absolute;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--brass);
+    box-shadow:0 1px 1px rgba(0,0,0,0.5);
+    top:10px;
+  }
+  .panel::before, .card::before{ left:10px; }
+  .panel::after, .card::after{ right:10px; }
+
+  .card{ transition:border-color 0.25s ease, background 0.25s ease; }
+  .card.correct{ border-color:var(--correct); background:rgba(229,194,80,0.08); }
+  .card.wrong{ border-color:var(--wrong); background:rgba(223,106,82,0.08); }
+
+  .q-tag{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:10px;
+  }
+  .q-emoji{
+    font-size:5rem;
+    line-height:1;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+  }
+  .q-name{
+    font-family:"Frank Ruhl Libre", Georgia, serif;
+    font-weight:500;
+    font-size:clamp(1.7rem, 5.5vw, 2.2rem);
+    margin:10px 0 0;
+    text-wrap:balance;
+  }
+
+  .feedback{
+    margin-top:14px;
+    min-height:1.4em;
+    font-size:0.92rem;
+    color:var(--ink-dim);
+  }
+  .feedback .verdict{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    letter-spacing:0.04em;
+    display:block;
+    margin-bottom:4px;
+  }
+  .feedback.correct .verdict{ color:var(--correct); }
+  .feedback.wrong .verdict{ color:var(--wrong); }
+
+  /* ---- answers (2 up) ---- */
+  .answers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:420px){
+    .answers{ grid-template-columns:1fr; }
+  }
+  .answer-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    color:var(--cover-deep);
+    background:var(--tone, var(--ink));
+    border:4px solid rgba(255,255,255,0.5);
+    border-radius:26px;
+    padding:20px 10px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.28);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); }
+  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.28); }
+  .answer-btn:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
+  .answer-btn[data-tone="living"]{ --tone:var(--living); }
+  .answer-btn[data-tone="nonliving"]{ --tone:var(--nonliving); }
+  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--correct); }
+  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--wrong); }
+  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--correct); }
+  .answer-btn:disabled{ cursor:default; }
+  .answer-btn:disabled:hover{ transform:none; }
+
+  .answer-icon{
+    font-size:2.6rem;
+    line-height:1;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .answer-btn:hover .answer-icon{ animation:jiggle 0.5s ease-in-out; }
+  }
+  @keyframes jiggle{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(-8deg); }
+    75%{ transform:rotate(8deg); }
+  }
+
+  .primary-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    color:var(--cover-deep);
+    background:var(--brass);
+    border:none;
+    border-radius:12px;
+    padding:13px 22px;
+    cursor:pointer;
+    align-self:center;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .primary-btn:hover{ transform:translateY(-2px); }
+  .primary-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  .primary-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+
+  .ghost-btn{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    background:transparent;
+    border:1px dashed var(--ink-faint);
+    border-radius:10px;
+    padding:8px 14px;
+    cursor:pointer;
+    align-self:center;
+  }
+  .ghost-btn:hover{ color:var(--ink); border-color:var(--ink-dim); }
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    min-height:48px;
+    align-items:center;
+  }
+
+  footer{
+    margin-top:auto;
+    padding-top:18px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    color:var(--ink-dim);
+    text-align:center;
+  }
+
+  .panel{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+  .legend{
+    display:flex;
+    gap:18px;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.75rem;
+    color:var(--ink-dim);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .swatch{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .swatch.living{ background:var(--living); }
+  .swatch.nonliving{ background:var(--nonliving); }
+
+  .best{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+
+  .grade{
+    font-family:"Frank Ruhl Libre", Georgia, serif;
+    font-weight:700;
+    font-size:clamp(2.3rem, 7.5vw, 3rem);
+    margin:0;
+  }
+  .score-big{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1rem;
+    color:var(--ink-dim);
+  }
+  .score-big b{ color:var(--ink); font-size:1.5rem; }
+
+  .tally-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    width:100%;
+  }
+  .tally-cell{
+    border:1px solid rgba(241,231,210,0.15);
+    border-radius:12px;
+    padding:10px 6px;
+    font-family:"IBM Plex Mono", monospace;
+  }
+  .tally-cell .n{ font-size:1.3rem; font-weight:600; color:var(--ink); }
+  .tally-cell .l{ font-size:0.7rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+  .tally-cell.living{ border-color:color-mix(in srgb, var(--living) 45%, transparent); }
+  .tally-cell.nonliving{ border-color:color-mix(in srgb, var(--nonliving) 45%, transparent); }
+
+  [hidden]{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="wrap">
+  <header>
+    <a class="breadcrumb" href="index.html">← The Sorting Shelf</a>
+    <h1>Alive or Not</h1>
+    <p class="subtitle" id="subtitle">Is it alive, or not alive? Let's find out!</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <section class="panel" id="startScreen">
+    <p style="margin:0; color:var(--ink-dim); max-width:46ch;">
+      We'll show you something. You tap: is it alive, or not alive?
+    </p>
+    <div class="legend">
+      <span><span class="swatch living"></span>🐾 Alive — eats, grows, moves</span>
+      <span><span class="swatch nonliving"></span>🪨 Not Alive — just a thing</span>
+    </div>
+    <p class="best" id="bestScoreLine" hidden></p>
+    <button class="primary-btn" id="startBtn">Let's Play! →</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" hidden style="display:flex; flex-direction:column; gap:16px;">
+    <div class="status-row">
+      <span class="chip" id="qCount">Question 1 / 50</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="chip">Score <b id="scoreChip">0</b></span>
+    </div>
+
+    <div class="card" id="card">
+      <p class="q-tag" id="qTag">Entry No. 001</p>
+      <div class="q-emoji" id="qEmoji">🌳</div>
+      <p class="q-name" id="qName">Oak Tree</p>
+      <p class="feedback" id="feedback"></p>
+    </div>
+
+    <div class="answers" id="answers">
+      <button class="answer-btn" data-tone="living" data-cat="living">
+        <span class="answer-icon">🐾</span>
+        <span class="answer-label">Alive</span>
+      </button>
+      <button class="answer-btn" data-tone="nonliving" data-cat="nonliving">
+        <span class="answer-icon">🪨</span>
+        <span class="answer-label">Not Alive</span>
+      </button>
+    </div>
+
+    <div class="action-row">
+      <button class="primary-btn" id="nextBtn" disabled>Next question →</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <section class="panel" id="endScreen" hidden>
+    <p class="eyebrow">Field Notes — Results</p>
+    <p class="grade" id="gradeLine">A−</p>
+    <p class="score-big">Final score <b id="finalScore">0</b> / 50</p>
+    <div class="tally-grid">
+      <div class="tally-cell living"><div class="n" id="tallyLiving">0/0</div><div class="l">Alive</div></div>
+      <div class="tally-cell nonliving"><div class="n" id="tallyNonliving">0/0</div><div class="l">Not Alive</div></div>
+    </div>
+    <p class="best" id="bestScoreLineEnd" hidden></p>
+    <div class="action-row" style="gap:10px;">
+      <button class="primary-btn" id="playAgainBtn">Run it back</button>
+      <button class="ghost-btn" id="reviewBtn">Review misses</button>
+    </div>
+  </section>
+
+  <footer>ink &amp; field notes · living/non-living given by standard biology consensus</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ITEMS = [
+    {e:"🐶", n:"Dog", c:"living", f:"A dog eats, sleeps, runs, and grows. It's alive!"},
+    {e:"🐱", n:"Cat", c:"living", f:"A cat breathes, plays, and grows. It's alive!"},
+    {e:"🐦", n:"Bird", c:"living", f:"A bird eats, flies, and lays eggs. It's alive!"},
+    {e:"🐟", n:"Fish", c:"living", f:"A fish breathes underwater and swims. It's alive!"},
+    {e:"🦋", n:"Butterfly", c:"living", f:"A butterfly flutters, eats, and grows. It's alive!"},
+    {e:"🌸", n:"Flower", c:"living", f:"A flower grows from a seed and needs water. It's alive!"},
+    {e:"🌳", n:"Tree", c:"living", f:"A tree grows taller every year. It's alive!"},
+    {e:"🐰", n:"Bunny", c:"living", f:"A bunny hops, eats, and grows. It's alive!"},
+    {e:"🐞", n:"Ladybug", c:"living", f:"A tiny bug that crawls and flies. It's alive!"},
+    {e:"🐜", n:"Ant", c:"living", f:"Ants march, dig, and work together. They're alive!"},
+    {e:"👶", n:"Baby", c:"living", f:"A baby grows bigger every single day. Babies are alive!"},
+    {e:"🐸", n:"Frog", c:"living", f:"A frog hops, swims, and grows. It's alive!"},
+    {e:"🦆", n:"Duck", c:"living", f:"A duck swims, quacks, and grows. It's alive!"},
+    {e:"🐝", n:"Bee", c:"living", f:"A bee buzzes around and visits flowers. It's alive!"},
+    {e:"🐌", n:"Snail", c:"living", f:"A snail creeps along slowly. It's alive!"},
+    {e:"🐢", n:"Turtle", c:"living", f:"A turtle walks, eats, and grows. It's alive!"},
+    {e:"🐔", n:"Chicken", c:"living", f:"A chicken clucks, walks, and lays eggs. It's alive!"},
+    {e:"🐄", n:"Cow", c:"living", f:"A cow eats grass and says moo. It's alive!"},
+    {e:"🐴", n:"Horse", c:"living", f:"A horse runs, eats, and grows. It's alive!"},
+    {e:"🐘", n:"Elephant", c:"living", f:"A big animal that eats, walks, and grows. It's alive!"},
+    {e:"🦁", n:"Lion", c:"living", f:"A lion runs, roars, and grows. It's alive!"},
+    {e:"🐧", n:"Penguin", c:"living", f:"A penguin waddles and swims. It's alive!"},
+    {e:"🦉", n:"Owl", c:"living", f:"An owl flies at night and hoots. It's alive!"},
+    {e:"🐿️", n:"Squirrel", c:"living", f:"A squirrel scurries around and grows. It's alive!"},
+    {e:"🌻", n:"Sunflower", c:"living", f:"A sunflower grows tall and follows the sun. It's alive!"},
+
+    {e:"🪨", n:"Rock", c:"nonliving", f:"A rock just sits there. It doesn't eat or grow."},
+    {e:"⚽", n:"Ball", c:"nonliving", f:"A ball only moves when you kick it."},
+    {e:"🚗", n:"Toy Car", c:"nonliving", f:"A toy car only rolls when you push it."},
+    {e:"🧸", n:"Teddy Bear", c:"nonliving", f:"A teddy bear is soft and cuddly, but it can't eat or grow."},
+    {e:"📖", n:"Book", c:"nonliving", f:"A book just sits on the shelf. It doesn't grow."},
+    {e:"👟", n:"Shoe", c:"nonliving", f:"A shoe never eats, breathes, or grows."},
+    {e:"🥄", n:"Spoon", c:"nonliving", f:"A spoon is just metal or plastic. It never grows."},
+    {e:"🪑", n:"Chair", c:"nonliving", f:"A chair just sits still. It never grows."},
+    {e:"🎈", n:"Balloon", c:"nonliving", f:"A balloon is just rubber and air. It never grows on its own."},
+    {e:"🛏️", n:"Bed", c:"nonliving", f:"A bed just sits in your room. It never grows."},
+    {e:"🖍️", n:"Crayon", c:"nonliving", f:"A crayon just sits until you pick it up. It never grows."},
+    {e:"🧱", n:"Building Block", c:"nonliving", f:"A block only moves when you stack it. It's not alive."},
+    {e:"🪆", n:"Doll", c:"nonliving", f:"A doll looks like a person, but it can't eat or grow."},
+    {e:"🤖", n:"Robot Toy", c:"nonliving", f:"A robot toy only moves with batteries. It's not alive."},
+    {e:"☂️", n:"Umbrella", c:"nonliving", f:"An umbrella opens and closes, but it never grows."},
+    {e:"🕐", n:"Clock", c:"nonliving", f:"A clock ticks, but it never eats or grows."},
+    {e:"📱", n:"Phone", c:"nonliving", f:"A phone lights up, but it's not alive."},
+    {e:"🔑", n:"Key", c:"nonliving", f:"A little piece of metal. It never grows."},
+    {e:"🪙", n:"Coin", c:"nonliving", f:"A coin just sits in your pocket. It's not alive."},
+    {e:"☁️", n:"Cloud", c:"nonliving", f:"A cloud floats by, but it doesn't eat or grow."},
+    {e:"🌙", n:"Moon", c:"nonliving", f:"The moon glows at night, but it's not alive."},
+    {e:"☀️", n:"Sun", c:"nonliving", f:"The sun is big and bright, but it's not alive."},
+    {e:"🌈", n:"Rainbow", c:"nonliving", f:"A rainbow is pretty colors in the sky. It's not alive."},
+    {e:"🌧️", n:"Rain", c:"nonliving", f:"Rain falls from clouds, but it's not alive."},
+    {e:"🕯️", n:"Candle", c:"nonliving", f:"A candle just sits there. It never grows."}
+  ];
+
+  var CAT_LABEL = {living:"Alive", nonliving:"Not Alive"};
+
+  var els = {
+    startScreen: document.getElementById("startScreen"),
+    gameScreen: document.getElementById("gameScreen"),
+    endScreen: document.getElementById("endScreen"),
+    startBtn: document.getElementById("startBtn"),
+    playAgainBtn: document.getElementById("playAgainBtn"),
+    reviewBtn: document.getElementById("reviewBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    qCount: document.getElementById("qCount"),
+    progressFill: document.getElementById("progressFill"),
+    scoreChip: document.getElementById("scoreChip"),
+    card: document.getElementById("card"),
+    qTag: document.getElementById("qTag"),
+    qEmoji: document.getElementById("qEmoji"),
+    qName: document.getElementById("qName"),
+    feedback: document.getElementById("feedback"),
+    answers: document.getElementById("answers"),
+    gradeLine: document.getElementById("gradeLine"),
+    finalScore: document.getElementById("finalScore"),
+    tallyLiving: document.getElementById("tallyLiving"),
+    tallyNonliving: document.getElementById("tallyNonliving"),
+    bestScoreLine: document.getElementById("bestScoreLine"),
+    bestScoreLineEnd: document.getElementById("bestScoreLineEnd"),
+    subtitle: document.getElementById("subtitle")
+  };
+
+  var answerButtons = Array.prototype.slice.call(els.answers.querySelectorAll(".answer-btn"));
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function getBest(){
+    try{
+      var v = localStorage.getItem("aliveornot_best");
+      return v ? parseInt(v, 10) : null;
+    }catch(e){ return null; }
+  }
+  function setBest(score){
+    try{ localStorage.setItem("aliveornot_best", String(score)); }catch(e){}
+  }
+
+  var order = [];
+  var index = 0;
+  var score = 0;
+  var answered = false;
+  var misses = [];
+  var tally = {
+    living:{correct:0,total:0},
+    nonliving:{correct:0,total:0}
+  };
+
+  function showScreen(name){
+    els.startScreen.hidden = name !== "start";
+    els.gameScreen.hidden = name !== "game";
+    els.endScreen.hidden = name !== "end";
+    els.subtitle.textContent = name === "start"
+      ? "Is it alive, or not alive? Let's find out!"
+      : name === "game"
+        ? "What do you think this is?"
+        : "All done! Let's see how you did.";
+  }
+
+  function startGame(){
+    order = shuffle(ITEMS.map(function(_, i){ return i; }));
+    index = 0;
+    score = 0;
+    misses = [];
+    tally = {living:{correct:0,total:0}, nonliving:{correct:0,total:0}};
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    answered = false;
+    var item = ITEMS[order[index]];
+    els.qTag.textContent = "Entry No. " + String(index + 1).padStart(3, "0");
+    els.qEmoji.textContent = item.e;
+    els.qName.textContent = item.n;
+    els.feedback.textContent = "";
+    els.feedback.className = "feedback";
+    els.card.classList.remove("correct", "wrong");
+    els.qCount.innerHTML = "Question " + (index + 1) + " / " + ITEMS.length;
+    els.progressFill.style.transform = "scaleX(" + (index / ITEMS.length) + ")";
+    els.scoreChip.textContent = score;
+    els.nextBtn.disabled = true;
+    els.nextBtn.textContent = (index === ITEMS.length - 1) ? "See results →" : "Next question →";
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = false;
+      btn.classList.remove("chosen-correct", "chosen-wrong", "reveal-correct");
+    });
+  }
+
+  function submitAnswer(chosenCat){
+    if(answered) return;
+    answered = true;
+    var item = ITEMS[order[index]];
+    var correct = chosenCat === item.c;
+
+    tally[item.c].total++;
+    if(correct){
+      score++;
+      tally[item.c].correct++;
+    } else {
+      misses.push(item);
+    }
+
+    els.scoreChip.textContent = score;
+    els.card.classList.add(correct ? "correct" : "wrong");
+    els.feedback.className = "feedback " + (correct ? "correct" : "wrong");
+    els.feedback.innerHTML = "<span class=\"verdict\">" +
+      (correct ? "✓ Correct — " + CAT_LABEL[item.c] : "✕ Actually " + CAT_LABEL[item.c]) +
+      "</span>" + item.f;
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = true;
+      var cat = btn.getAttribute("data-cat");
+      if(cat === item.c){
+        btn.classList.add(correct ? "chosen-correct" : "reveal-correct");
+      } else if(cat === chosenCat){
+        btn.classList.add("chosen-wrong");
+      }
+    });
+
+    els.nextBtn.disabled = false;
+    els.nextBtn.focus();
+  }
+
+  function nextQuestion(){
+    if(index >= ITEMS.length - 1){
+      endGame();
+      return;
+    }
+    index++;
+    renderQuestion();
+  }
+
+  function gradeFor(pct){
+    if(pct >= 96) return "A+";
+    if(pct >= 90) return "A";
+    if(pct >= 85) return "A−";
+    if(pct >= 80) return "B+";
+    if(pct >= 70) return "B";
+    if(pct >= 60) return "C";
+    if(pct >= 45) return "D";
+    return "F";
+  }
+
+  function endGame(){
+    els.progressFill.style.transform = "scaleX(1)";
+    var pct = (score / ITEMS.length) * 100;
+    els.gradeLine.textContent = gradeFor(pct);
+    els.finalScore.textContent = score;
+    els.tallyLiving.textContent = tally.living.correct + "/" + tally.living.total;
+    els.tallyNonliving.textContent = tally.nonliving.correct + "/" + tally.nonliving.total;
+
+    var best = getBest();
+    if(best === null || score > best){
+      setBest(score);
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "★ New best score!";
+    } else {
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + ITEMS.length;
+    }
+    els.reviewBtn.hidden = misses.length === 0;
+    showScreen("end");
+  }
+
+  function reviewMisses(){
+    if(misses.length === 0) return;
+    var text = misses.map(function(m){
+      return m.e + " " + m.n + " — " + CAT_LABEL[m.c];
+    }).join("\n");
+    alert("Questions you missed:\n\n" + text);
+  }
+
+  answerButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      submitAnswer(btn.getAttribute("data-cat"));
+    });
+  });
+  els.nextBtn.addEventListener("click", nextQuestion);
+  els.startBtn.addEventListener("click", startGame);
+  els.playAgainBtn.addEventListener("click", startGame);
+  els.reviewBtn.addEventListener("click", reviewMisses);
+
+  document.addEventListener("keydown", function(e){
+    if(!els.gameScreen.hidden){
+      var k = e.key.toLowerCase();
+      if(!answered){
+        if(k === "l" || k === "1") submitAnswer("living");
+        else if(k === "n" || k === "2") submitAnswer("nonliving");
+      } else if(k === "enter" || k === " "){
+        e.preventDefault();
+        nextQuestion();
+      }
+    } else if(!els.startScreen.hidden && (e.key === "Enter")){
+      startGame();
+    }
+  });
+
+  var best0 = getBest();
+  if(best0 !== null){
+    els.bestScoreLine.hidden = false;
+    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + ITEMS.length;
+  }
+
+  function snapshot(){
+    return {
+      screen: els.startScreen.hidden ? (els.endScreen.hidden ? "game" : "end") : "start",
+      order: order, index: index, score: score, tally: tally, misses: misses
+    };
+  }
+  function boot(data){
+    if(data && data.order && data.order.length){
+      order = data.order; index = data.index || 0; score = data.score || 0;
+      tally = data.tally || tally; misses = data.misses || [];
+      if(data.screen === "end"){ endGame(); }
+      else if(data.screen === "game"){ showScreen("game"); renderQuestion(); }
+      else { showScreen("start"); }
+    } else {
+      showScreen("start");
+    }
+  }
+  if(window.claude && window.claude.hot){
+    window.claude.hot.snapshot(snapshot);
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot(window.claude.hot.data);
+  } else {
+    showScreen("start");
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase Lab</title>
+<meta name="description" content="A 50-question chalkboard quiz sorting everyday things into solid, liquid, or gas.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --board:#1e332a;
+    --board-deep:#132019;
+    --board-edge:#0f1712;
+    --chalk:#f3f1e6;
+    --chalk-dim:#a9b8ac;
+    --chalk-faint:#6c7d70;
+    --solid:#8fc7e8;
+    --liquid:#5fd0a6;
+    --gas:#f0a75c;
+    --correct:#a3e86a;
+    --wrong:#ef7d6e;
+    --wood:#7a5138;
+    --wood-dark:#4c3122;
+    --wood-light:#96694a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, rgba(255,255,255,0.05), transparent 60%),
+      radial-gradient(ellipse 90% 60% at 15% 110%, rgba(0,0,0,0.35), transparent 60%),
+      var(--board);
+    color:var(--chalk);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100dvh;
+    padding:22px 16px 26px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  body::before, body::after{
+    content:"";
+    position:fixed;
+    left:0; right:0;
+    height:16px;
+    background:linear-gradient(180deg, var(--wood-light), var(--wood) 45%, var(--wood-dark));
+    box-shadow:0 0 0 1px rgba(0,0,0,0.25) inset;
+    z-index:5;
+  }
+  body::before{ top:0; }
+  body::after{ bottom:0; box-shadow:0 -2px 8px rgba(0,0,0,0.35) inset; }
+
+  .noise{
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:0.05;
+    background-image:radial-gradient(circle, #fff 1px, transparent 1px);
+    background-size:3px 3px;
+    z-index:1;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:640px;
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:10px;
+  }
+
+  header{ text-align:center; }
+  .breadcrumb{
+    display:inline-block;
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:0.82rem;
+    font-weight:500;
+    color:var(--chalk-dim);
+    text-decoration:none;
+    margin-bottom:10px;
+    border-bottom:1px solid transparent;
+  }
+  .breadcrumb:hover{ color:var(--chalk); border-bottom-color:var(--chalk-faint); }
+  .breadcrumb:focus-visible{ outline:2px solid var(--chalk); outline-offset:3px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--chalk-dim);
+    margin:0 0 2px;
+  }
+  h1{
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size:clamp(2.6rem, 8vw, 3.6rem);
+    margin:0;
+    line-height:0.95;
+    text-shadow:0 0 14px rgba(243,241,230,0.15);
+  }
+  .subtitle{
+    color:var(--chalk-dim);
+    font-size:0.92rem;
+    margin-top:4px;
+  }
+
+  /* ---- top status row ---- */
+  .status-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--chalk-dim);
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px;
+    border:1px dashed var(--chalk-faint);
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .chip b{ color:var(--chalk); font-weight:600; }
+  .progress-track{
+    position:relative;
+    flex:1;
+    height:6px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    overflow:hidden;
+    min-width:60px;
+  }
+  .progress-fill{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(90deg, var(--solid), var(--liquid) 50%, var(--gas));
+    border-radius:999px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.35s ease;
+  }
+
+  /* ---- specimen card ---- */
+  .card{
+    border:2px dashed rgba(243,241,230,0.35);
+    border-radius:22px;
+    padding:34px 24px 26px;
+    text-align:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.08));
+    position:relative;
+    transition:border-color 0.25s ease, background 0.25s ease;
+  }
+  .card.correct{ border-color:var(--correct); background:rgba(163,232,106,0.08); }
+  .card.wrong{ border-color:var(--wrong); background:rgba(239,125,110,0.08); }
+
+  .specimen-tag{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--chalk-dim);
+    margin-bottom:10px;
+  }
+  .specimen-emoji{
+    font-size:5rem;
+    line-height:1;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+  }
+  .specimen-name{
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size:clamp(1.9rem, 6vw, 2.5rem);
+    margin:8px 0 0;
+    text-wrap:balance;
+  }
+
+  .feedback{
+    margin-top:14px;
+    min-height:1.4em;
+    font-size:0.92rem;
+    color:var(--chalk-dim);
+  }
+  .feedback .verdict{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    letter-spacing:0.04em;
+    display:block;
+    margin-bottom:4px;
+  }
+  .feedback.correct .verdict{ color:var(--correct); }
+  .feedback.wrong .verdict{ color:var(--wrong); }
+
+  /* ---- answer buttons ---- */
+  .answers{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  @media (max-width:460px){
+    .answers{ grid-template-columns:1fr; }
+  }
+  .answer-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    color:var(--board-deep);
+    background:var(--tone, var(--chalk));
+    border:4px solid rgba(255,255,255,0.55);
+    border-radius:26px;
+    padding:20px 10px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.28);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); }
+  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.28); }
+  .answer-btn:focus-visible{ outline:3px solid var(--chalk); outline-offset:3px; }
+  .answer-btn[data-tone="solid"]{ --tone:var(--solid); }
+  .answer-btn[data-tone="liquid"]{ --tone:var(--liquid); }
+  .answer-btn[data-tone="gas"]{ --tone:var(--gas); }
+  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--correct); }
+  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--wrong); }
+  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 0 0 4px var(--correct); }
+  .answer-btn:disabled{ cursor:default; }
+  .answer-btn:disabled:hover{ transform:none; }
+
+  .answer-icon{
+    font-size:2.6rem;
+    line-height:1;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .answer-btn:hover .answer-icon{ animation:jiggle 0.5s ease-in-out; }
+  }
+  @keyframes jiggle{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(-8deg); }
+    75%{ transform:rotate(8deg); }
+  }
+
+  /* ---- next / start / restart buttons ---- */
+  .primary-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    color:var(--board-deep);
+    background:var(--chalk);
+    border:none;
+    border-radius:12px;
+    padding:13px 22px;
+    cursor:pointer;
+    align-self:center;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .primary-btn:hover{ transform:translateY(-2px); }
+  .primary-btn:focus-visible{ outline:2px solid var(--chalk); outline-offset:3px; }
+  .primary-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+
+  .ghost-btn{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--chalk-dim);
+    background:transparent;
+    border:1px dashed var(--chalk-faint);
+    border-radius:10px;
+    padding:8px 14px;
+    cursor:pointer;
+    align-self:center;
+  }
+  .ghost-btn:hover{ color:var(--chalk); border-color:var(--chalk-dim); }
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    min-height:48px;
+    align-items:center;
+  }
+
+  footer{
+    margin-top:auto;
+    padding-top:18px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    color:var(--chalk-dim);
+    text-align:center;
+  }
+
+  /* ---- start / end screens ---- */
+  .panel{
+    border:2px dashed rgba(243,241,230,0.35);
+    border-radius:22px;
+    padding:30px 24px;
+    text-align:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.08));
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+  .legend{
+    display:flex;
+    gap:18px;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.75rem;
+    color:var(--chalk-dim);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .swatch{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .swatch.solid{ background:var(--solid); }
+  .swatch.liquid{ background:var(--liquid); }
+  .swatch.gas{ background:var(--gas); }
+
+  .best{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--chalk-dim);
+  }
+
+  .grade{
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size:clamp(2.4rem, 8vw, 3.2rem);
+    margin:0;
+  }
+  .score-big{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1rem;
+    color:var(--chalk-dim);
+  }
+  .score-big b{ color:var(--chalk); font-size:1.5rem; }
+
+  .tally-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    width:100%;
+  }
+  .tally-cell{
+    border:1px solid rgba(243,241,230,0.15);
+    border-radius:12px;
+    padding:10px 6px;
+    font-family:"IBM Plex Mono", monospace;
+  }
+  .tally-cell .n{ font-size:1.3rem; font-weight:600; color:var(--chalk); }
+  .tally-cell .l{ font-size:0.7rem; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+  .tally-cell.solid{ border-color:color-mix(in srgb, var(--solid) 45%, transparent); }
+  .tally-cell.liquid{ border-color:color-mix(in srgb, var(--liquid) 45%, transparent); }
+  .tally-cell.gas{ border-color:color-mix(in srgb, var(--gas) 45%, transparent); }
+
+  [hidden]{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="wrap">
+  <header>
+    <a class="breadcrumb" href="index.html">← The Sorting Shelf</a>
+    <h1>Phase Lab</h1>
+    <p class="subtitle" id="subtitle">Is it solid, liquid, or gas? Let's find out!</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <section class="panel" id="startScreen">
+    <p style="margin:0; color:var(--chalk-dim); max-width:46ch;">
+      We'll show you something. You tap what it is: solid, liquid, or gas!
+    </p>
+    <div class="legend">
+      <span><span class="swatch solid"></span>🧊 Solid — stays still</span>
+      <span><span class="swatch liquid"></span>💧 Liquid — you can pour it</span>
+      <span><span class="swatch gas"></span>☁️ Gas — floats in the air</span>
+    </div>
+    <p class="best" id="bestScoreLine" hidden></p>
+    <button class="primary-btn" id="startBtn">Let's Play! →</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" hidden style="display:flex; flex-direction:column; gap:16px;">
+    <div class="status-row">
+      <span class="chip" id="specimenCount">Question 1 / 50</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="chip">Score <b id="scoreChip">0</b></span>
+    </div>
+
+    <div class="card" id="card">
+      <p class="specimen-tag" id="specimenTag">Question No. 001</p>
+      <div class="specimen-emoji" id="specimenEmoji">🧊</div>
+      <p class="specimen-name" id="specimenName">Ice Cube</p>
+      <p class="feedback" id="feedback"></p>
+    </div>
+
+    <div class="answers" id="answers">
+      <button class="answer-btn" data-tone="solid" data-state="solid">
+        <span class="answer-icon">🧊</span>
+        <span class="answer-label">Solid</span>
+      </button>
+      <button class="answer-btn" data-tone="liquid" data-state="liquid">
+        <span class="answer-icon">💧</span>
+        <span class="answer-label">Liquid</span>
+      </button>
+      <button class="answer-btn" data-tone="gas" data-state="gas">
+        <span class="answer-icon">☁️</span>
+        <span class="answer-label">Gas</span>
+      </button>
+    </div>
+
+    <div class="action-row">
+      <button class="primary-btn" id="nextBtn" disabled>Next question →</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <section class="panel" id="endScreen" hidden>
+    <p class="eyebrow">Lab Results</p>
+    <p class="grade" id="gradeLine">A−</p>
+    <p class="score-big">Final score <b id="finalScore">0</b> / 50</p>
+    <div class="tally-grid">
+      <div class="tally-cell solid"><div class="n" id="tallySolid">0/0</div><div class="l">Solid</div></div>
+      <div class="tally-cell liquid"><div class="n" id="tallyLiquid">0/0</div><div class="l">Liquid</div></div>
+      <div class="tally-cell gas"><div class="n" id="tallyGas">0/0</div><div class="l">Gas</div></div>
+    </div>
+    <p class="best" id="bestScoreLineEnd" hidden></p>
+    <div class="action-row" style="gap:10px;">
+      <button class="primary-btn" id="playAgainBtn">Run it back</button>
+      <button class="ghost-btn" id="reviewBtn">Review misses</button>
+    </div>
+  </section>
+
+  <footer>chalk &amp; carbon · classifications given at ~20&nbsp;°C, 1&nbsp;atm</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SPECIMENS = [
+    {e:"🧊", n:"Ice Cube", s:"solid", f:"Ice is frozen water. It's hard and cold!"},
+    {e:"🪨", n:"Rock", s:"solid", f:"A rock is hard. It always keeps its shape."},
+    {e:"🧸", n:"Teddy Bear", s:"solid", f:"Squishy and soft, but it still keeps its shape."},
+    {e:"⚽", n:"Ball", s:"solid", f:"A ball stays round so it can bounce."},
+    {e:"📖", n:"Book", s:"solid", f:"Books are solid — you can hold and stack them."},
+    {e:"👟", n:"Shoe", s:"solid", f:"Shoes keep their shape on your feet."},
+    {e:"🍌", n:"Banana", s:"solid", f:"A banana is solid, just like an apple or a cookie."},
+    {e:"🍎", n:"Apple", s:"solid", f:"Apples are crunchy and solid."},
+    {e:"🍪", n:"Cookie", s:"solid", f:"Cookies are solid... until you eat them!"},
+    {e:"🖍️", n:"Crayon", s:"solid", f:"Crayons are solid and hard, just right for drawing."},
+    {e:"🥄", n:"Spoon", s:"solid", f:"A spoon keeps its shape when you hold it."},
+    {e:"🧱", n:"Building Block", s:"solid", f:"Blocks stack up because they're solid."},
+    {e:"🚗", n:"Toy Car", s:"solid", f:"A toy car is solid, so it rolls without changing shape."},
+    {e:"⛄", n:"Snowman", s:"solid", f:"Made of packed snow — solid and cold!"},
+    {e:"🧀", n:"Cheese", s:"solid", f:"Cheese is solid, but it can melt if it gets warm."},
+    {e:"🔑", n:"Key", s:"solid", f:"A little solid piece of metal."},
+    {e:"🪵", n:"Log", s:"solid", f:"A log is a big piece of solid wood."},
+
+    {e:"💧", n:"Water", s:"liquid", f:"Water pours and splashes!"},
+    {e:"🥛", n:"Milk", s:"liquid", f:"Milk pours out of the carton."},
+    {e:"🧃", n:"Juice", s:"liquid", f:"Juice is yummy and pours easily."},
+    {e:"🍯", n:"Honey", s:"liquid", f:"Honey is thick and slow, but it still pours."},
+    {e:"🍲", n:"Soup", s:"liquid", f:"Soup is a warm liquid in a bowl."},
+    {e:"🛁", n:"Bathwater", s:"liquid", f:"Splish splash — bathwater is a liquid!"},
+    {e:"🌧️", n:"Rain", s:"liquid", f:"Raindrops fall down from the clouds."},
+    {e:"🎨", n:"Paint", s:"liquid", f:"Paint is wet and drippy on your brush."},
+    {e:"🍦", n:"Melted Ice Cream", s:"liquid", f:"Oops — it melted into a liquid!"},
+    {e:"🧴", n:"Shampoo", s:"liquid", f:"Shampoo squirts and pours."},
+    {e:"🥤", n:"Lemonade", s:"liquid", f:"Cold and pourable — a liquid!"},
+    {e:"🍅", n:"Ketchup", s:"liquid", f:"Ketchup squeezes out of the bottle."},
+    {e:"🫧", n:"Bubble Bath", s:"liquid", f:"Soapy water — splish splash!"},
+    {e:"🥣", n:"Yogurt", s:"liquid", f:"Yogurt is a gloopy, pourable liquid."},
+    {e:"💦", n:"Puddle", s:"liquid", f:"A puddle is just water on the ground."},
+    {e:"🥞", n:"Syrup", s:"liquid", f:"Syrup drips slowly onto pancakes."},
+    {e:"😢", n:"Tears", s:"liquid", f:"Tears are a liquid too!"},
+
+    {e:"🎈", n:"Balloon Air", s:"gas", f:"Air fills the balloon up and stretches it!"},
+    {e:"☁️", n:"Cloud", s:"gas", f:"Clouds float high up in the sky."},
+    {e:"🫧", n:"Soap Bubble", s:"gas", f:"A soap bubble is full of floaty air!"},
+    {e:"🫖", n:"Kettle Steam", s:"gas", f:"Steam rises up from a hot kettle."},
+    {e:"💨", n:"Wind", s:"gas", f:"You can't see wind, but you can feel it blow!"},
+    {e:"🚲", n:"Bike Tire Air", s:"gas", f:"Air inside makes the tire round and bouncy."},
+    {e:"🥶", n:"Foggy Breath", s:"gas", f:"On a cold day, you can see your breath in the air!"},
+    {e:"🕯️", n:"Candle Smoke", s:"gas", f:"Smoke drifts up and away into the air."},
+    {e:"🏖️", n:"Beach Ball Air", s:"gas", f:"Air inside makes the beach ball light and floaty."},
+    {e:"🍬", n:"Bubblegum Bubble", s:"gas", f:"You blow air inside to make it big!"},
+    {e:"🌬️", n:"The Air We Breathe", s:"gas", f:"We breathe air in and out all day long."},
+    {e:"🎉", n:"Party Balloon", s:"gas", f:"A floaty gas called helium makes it rise!"},
+    {e:"🧁", n:"Cupcake Steam", s:"gas", f:"Warm cupcakes let off a little wisp of steam."},
+    {e:"🥤", n:"Fizzy Soda Bubbles", s:"gas", f:"Tiny bubbles of gas fizz and pop in soda!"},
+    {e:"💇", n:"Hair Dryer Air", s:"gas", f:"Warm air blows out to dry your hair!"},
+    {e:"🤭", n:"Big Burp", s:"gas", f:"A burp is just air escaping your tummy!"}
+  ];
+
+  var STATE_LABEL = {solid:"Solid", liquid:"Liquid", gas:"Gas"};
+
+  var els = {
+    startScreen: document.getElementById("startScreen"),
+    gameScreen: document.getElementById("gameScreen"),
+    endScreen: document.getElementById("endScreen"),
+    startBtn: document.getElementById("startBtn"),
+    playAgainBtn: document.getElementById("playAgainBtn"),
+    reviewBtn: document.getElementById("reviewBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    specimenCount: document.getElementById("specimenCount"),
+    progressFill: document.getElementById("progressFill"),
+    scoreChip: document.getElementById("scoreChip"),
+    card: document.getElementById("card"),
+    specimenTag: document.getElementById("specimenTag"),
+    specimenEmoji: document.getElementById("specimenEmoji"),
+    specimenName: document.getElementById("specimenName"),
+    feedback: document.getElementById("feedback"),
+    answers: document.getElementById("answers"),
+    gradeLine: document.getElementById("gradeLine"),
+    finalScore: document.getElementById("finalScore"),
+    tallySolid: document.getElementById("tallySolid"),
+    tallyLiquid: document.getElementById("tallyLiquid"),
+    tallyGas: document.getElementById("tallyGas"),
+    bestScoreLine: document.getElementById("bestScoreLine"),
+    bestScoreLineEnd: document.getElementById("bestScoreLineEnd"),
+    subtitle: document.getElementById("subtitle")
+  };
+
+  var answerButtons = Array.prototype.slice.call(els.answers.querySelectorAll(".answer-btn"));
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function getBest(){
+    try{
+      var v = localStorage.getItem("phaselab_best");
+      return v ? parseInt(v, 10) : null;
+    }catch(e){ return null; }
+  }
+  function setBest(score){
+    try{ localStorage.setItem("phaselab_best", String(score)); }catch(e){}
+  }
+
+  var order = [];
+  var index = 0;
+  var score = 0;
+  var answered = false;
+  var misses = [];
+  var tally = {
+    solid:{correct:0,total:0},
+    liquid:{correct:0,total:0},
+    gas:{correct:0,total:0}
+  };
+
+  function showScreen(name){
+    els.startScreen.hidden = name !== "start";
+    els.gameScreen.hidden = name !== "game";
+    els.endScreen.hidden = name !== "end";
+    els.subtitle.textContent = name === "start"
+      ? "Is it solid, liquid, or gas? Let's find out!"
+      : name === "game"
+        ? "What do you think this is?"
+        : "All done! Let's see how you did.";
+  }
+
+  function startGame(fresh){
+    order = shuffle(SPECIMENS.map(function(_, i){ return i; }));
+    index = 0;
+    score = 0;
+    misses = [];
+    tally = {solid:{correct:0,total:0}, liquid:{correct:0,total:0}, gas:{correct:0,total:0}};
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    answered = false;
+    var item = SPECIMENS[order[index]];
+    els.specimenTag.textContent = "Question No. " + String(index + 1).padStart(3, "0");
+    els.specimenEmoji.textContent = item.e;
+    els.specimenName.textContent = item.n;
+    els.feedback.textContent = "";
+    els.feedback.className = "feedback";
+    els.card.classList.remove("correct", "wrong");
+    els.specimenCount.innerHTML = "Question " + (index + 1) + " / " + SPECIMENS.length;
+    els.progressFill.style.transform = "scaleX(" + (index / SPECIMENS.length) + ")";
+    els.scoreChip.textContent = score;
+    els.nextBtn.disabled = true;
+    els.nextBtn.textContent = (index === SPECIMENS.length - 1) ? "See results →" : "Next question →";
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = false;
+      btn.classList.remove("chosen-correct", "chosen-wrong", "reveal-correct");
+    });
+  }
+
+  function submitAnswer(chosenState){
+    if(answered) return;
+    answered = true;
+    var item = SPECIMENS[order[index]];
+    var correct = chosenState === item.s;
+
+    tally[item.s].total++;
+    if(correct){
+      score++;
+      tally[item.s].correct++;
+    } else {
+      misses.push(item);
+    }
+
+    els.scoreChip.textContent = score;
+    els.card.classList.add(correct ? "correct" : "wrong");
+    els.feedback.className = "feedback " + (correct ? "correct" : "wrong");
+    els.feedback.innerHTML = "<span class=\"verdict\">" +
+      (correct ? "✓ Correct — " + STATE_LABEL[item.s] : "✕ Actually a " + STATE_LABEL[item.s]) +
+      "</span>" + item.f;
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = true;
+      var st = btn.getAttribute("data-state");
+      if(st === item.s){
+        btn.classList.add(correct ? "chosen-correct" : "reveal-correct");
+      } else if(st === chosenState){
+        btn.classList.add("chosen-wrong");
+      }
+    });
+
+    els.nextBtn.disabled = false;
+    els.nextBtn.focus();
+  }
+
+  function nextQuestion(){
+    if(index >= SPECIMENS.length - 1){
+      endGame();
+      return;
+    }
+    index++;
+    renderQuestion();
+  }
+
+  function gradeFor(pct){
+    if(pct >= 96) return "A+";
+    if(pct >= 90) return "A";
+    if(pct >= 85) return "A−";
+    if(pct >= 80) return "B+";
+    if(pct >= 70) return "B";
+    if(pct >= 60) return "C";
+    if(pct >= 45) return "D";
+    return "F";
+  }
+
+  function endGame(){
+    els.progressFill.style.transform = "scaleX(1)";
+    var pct = (score / SPECIMENS.length) * 100;
+    els.gradeLine.textContent = gradeFor(pct);
+    els.finalScore.textContent = score;
+    els.tallySolid.textContent = tally.solid.correct + "/" + tally.solid.total;
+    els.tallyLiquid.textContent = tally.liquid.correct + "/" + tally.liquid.total;
+    els.tallyGas.textContent = tally.gas.correct + "/" + tally.gas.total;
+
+    var best = getBest();
+    if(best === null || score > best){
+      setBest(score);
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "★ New best score!";
+    } else {
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + SPECIMENS.length;
+    }
+    els.reviewBtn.hidden = misses.length === 0;
+    showScreen("end");
+  }
+
+  function reviewMisses(){
+    if(misses.length === 0) return;
+    var text = misses.map(function(m){
+      return m.e + " " + m.n + " — " + STATE_LABEL[m.s];
+    }).join("\n");
+    alert("Questions you missed:\n\n" + text);
+  }
+
+  answerButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      submitAnswer(btn.getAttribute("data-state"));
+    });
+  });
+  els.nextBtn.addEventListener("click", nextQuestion);
+  els.startBtn.addEventListener("click", function(){ startGame(true); });
+  els.playAgainBtn.addEventListener("click", function(){ startGame(true); });
+  els.reviewBtn.addEventListener("click", reviewMisses);
+
+  document.addEventListener("keydown", function(e){
+    if(!els.gameScreen.hidden){
+      var k = e.key.toLowerCase();
+      if(!answered){
+        if(k === "s" || k === "1") submitAnswer("solid");
+        else if(k === "l" || k === "2") submitAnswer("liquid");
+        else if(k === "g" || k === "3") submitAnswer("gas");
+      } else if(k === "enter" || k === " "){
+        e.preventDefault();
+        nextQuestion();
+      }
+    } else if(!els.startScreen.hidden && (e.key === "Enter")){
+      startGame(true);
+    }
+  });
+
+  var best0 = getBest();
+  if(best0 !== null){
+    els.bestScoreLine.hidden = false;
+    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + SPECIMENS.length;
+  }
+
+  function snapshot(){
+    return {
+      screen: els.startScreen.hidden ? (els.endScreen.hidden ? "game" : "end") : "start",
+      order: order, index: index, score: score, tally: tally, misses: misses
+    };
+  }
+  function boot(data){
+    if(data && data.order && data.order.length){
+      order = data.order; index = data.index || 0; score = data.score || 0;
+      tally = data.tally || tally; misses = data.misses || [];
+      if(data.screen === "end"){ endGame(); }
+      else if(data.screen === "game"){ showScreen("game"); renderQuestion(); }
+      else { showScreen("start"); }
+    } else {
+      showScreen("start");
+    }
+  }
+  if(window.claude && window.claude.hot){
+    window.claude.hot.snapshot(snapshot);
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot(window.claude.hot.data);
+  } else {
+    showScreen("start");
+  }
+})();
+</script>
+</body>
+</html>
