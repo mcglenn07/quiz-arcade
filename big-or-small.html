@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big or Small</title>
+<meta name="description" content="A 50-question picture quiz comparing big/small, tall/short, and long/short.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📏</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --wall:#eaf4fb;
+    --wall-deep:#d8ebf6;
+    --wood:#a9754f;
+    --wood-dark:#7a5236;
+    --ink:#2b3a45;
+    --ink-dim:#5c7181;
+    --ink-faint:#8298a6;
+    --more:#ff8a5c;
+    --less:#3fb8b0;
+    --correct:#4caf50;
+    --wrong:#ef5757;
+    --panel:#ffffff;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(255,255,255,0.6), transparent 60%),
+      var(--wall);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100dvh;
+    padding:22px 16px 26px 46px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* growth-chart ruler running down the left edge */
+  body::before{
+    content:"";
+    position:fixed;
+    top:0; bottom:0; left:0;
+    width:26px;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 34px, rgba(122,82,54,0.35) 34px 36px),
+      linear-gradient(180deg, var(--wood), var(--wood-dark));
+    box-shadow:2px 0 8px rgba(0,0,0,0.12);
+    z-index:5;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:640px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:10px;
+  }
+
+  header{ text-align:center; }
+  .breadcrumb{
+    display:inline-block;
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:0.82rem;
+    font-weight:500;
+    color:var(--ink-dim);
+    text-decoration:none;
+    margin-bottom:10px;
+    border-bottom:1px solid transparent;
+  }
+  .breadcrumb:hover{ color:var(--ink); border-bottom-color:var(--ink-faint); }
+  .breadcrumb:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  h1{
+    font-family:"Baloo 2", cursive;
+    font-weight:800;
+    font-size:clamp(2.4rem, 7.5vw, 3.3rem);
+    margin:0;
+    line-height:1;
+    color:#2f6f8f;
+  }
+  .subtitle{
+    color:var(--ink-dim);
+    font-size:0.95rem;
+    margin-top:6px;
+  }
+
+  .status-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px;
+    border:1.5px dashed var(--ink-faint);
+    border-radius:999px;
+    white-space:nowrap;
+    background:var(--panel);
+  }
+  .chip b{ color:var(--ink); font-weight:700; }
+  .progress-track{
+    position:relative;
+    flex:1;
+    height:8px;
+    border-radius:999px;
+    background:rgba(43,58,69,0.1);
+    overflow:hidden;
+    min-width:60px;
+  }
+  .progress-fill{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(90deg, var(--more), var(--less));
+    border-radius:999px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.35s ease;
+  }
+
+  .panel, .card{
+    border:3px solid rgba(43,58,69,0.12);
+    border-radius:22px;
+    padding:30px 24px 26px;
+    text-align:center;
+    background:var(--panel);
+    box-shadow:0 10px 24px rgba(43,58,69,0.08);
+    position:relative;
+  }
+  .card{ transition:border-color 0.25s ease, background 0.25s ease; }
+  .card.correct{ border-color:var(--correct); background:#eefbef; }
+  .card.wrong{ border-color:var(--wrong); background:#fdeeee; }
+
+  .q-tag{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:10px;
+  }
+  .q-emoji{
+    font-size:5rem;
+    line-height:1;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.15));
+  }
+  .q-name{
+    font-family:"Baloo 2", cursive;
+    font-weight:700;
+    font-size:clamp(1.7rem, 5.5vw, 2.2rem);
+    margin:8px 0 0;
+    text-wrap:balance;
+  }
+
+  .feedback{
+    margin-top:14px;
+    min-height:1.4em;
+    font-size:0.95rem;
+    color:var(--ink-dim);
+  }
+  .feedback .verdict{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:700;
+    letter-spacing:0.04em;
+    display:block;
+    margin-bottom:4px;
+  }
+  .feedback.correct .verdict{ color:var(--correct); }
+  .feedback.wrong .verdict{ color:var(--wrong); }
+
+  .answers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:420px){
+    .answers{ grid-template-columns:1fr; }
+  }
+  .answer-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    color:var(--ink);
+    background:var(--tone, var(--ink-faint));
+    border:4px solid rgba(255,255,255,0.65);
+    border-radius:26px;
+    padding:20px 10px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.18);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); }
+  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.18); }
+  .answer-btn:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
+  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
+  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--wrong); }
+  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
+  .answer-btn:disabled{ cursor:default; }
+  .answer-btn:disabled:hover{ transform:none; }
+
+  .answer-icon{ font-size:2.6rem; line-height:1; }
+  @media (prefers-reduced-motion:no-preference){
+    .answer-btn:hover .answer-icon{ animation:jiggle 0.5s ease-in-out; }
+  }
+  @keyframes jiggle{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(-8deg); }
+    75%{ transform:rotate(8deg); }
+  }
+
+  .primary-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    color:#fff;
+    background:#2f6f8f;
+    border:none;
+    border-radius:14px;
+    padding:13px 22px;
+    cursor:pointer;
+    align-self:center;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .primary-btn:hover{ transform:translateY(-2px); }
+  .primary-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  .primary-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+
+  .ghost-btn{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    background:transparent;
+    border:1.5px dashed var(--ink-faint);
+    border-radius:10px;
+    padding:8px 14px;
+    cursor:pointer;
+    align-self:center;
+  }
+  .ghost-btn:hover{ color:var(--ink); border-color:var(--ink-dim); }
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    min-height:48px;
+    align-items:center;
+  }
+
+  footer{
+    margin-top:auto;
+    padding-top:18px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    color:var(--ink-dim);
+    text-align:center;
+  }
+
+  .panel{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+  .legend{
+    display:flex;
+    gap:18px;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+
+  .best{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+
+  .grade{
+    font-family:"Baloo 2", cursive;
+    font-weight:800;
+    font-size:clamp(2.3rem, 7.5vw, 3rem);
+    margin:0;
+    color:#2f6f8f;
+  }
+  .score-big{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1rem;
+    color:var(--ink-dim);
+  }
+  .score-big b{ color:var(--ink); font-size:1.5rem; }
+
+  .tally-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    width:100%;
+  }
+  .tally-cell{
+    border:1.5px solid rgba(43,58,69,0.15);
+    border-radius:12px;
+    padding:10px 6px;
+    font-family:"IBM Plex Mono", monospace;
+  }
+  .tally-cell .n{ font-size:1.3rem; font-weight:700; color:var(--ink); }
+  .tally-cell .l{ font-size:0.7rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+
+  [hidden]{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="breadcrumb" href="index.html">← The Sorting Shelf</a>
+    <h1>Big or Small</h1>
+    <p class="subtitle" id="subtitle">Is it big or small? Tall or short? Long or short? Let's find out!</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <section class="panel" id="startScreen">
+    <p style="margin:0; color:var(--ink-dim); max-width:46ch;">
+      We'll show you something. You tap the right size!
+    </p>
+    <div class="legend">
+      <span>🐘 Big</span><span>🐜 Small</span>
+      <span>🦒 Tall</span><span>🍄 Short</span>
+      <span>🐍 Long</span><span>✏️ Short</span>
+    </div>
+    <p class="best" id="bestScoreLine" hidden></p>
+    <button class="primary-btn" id="startBtn">Let's Play! →</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" hidden style="display:flex; flex-direction:column; gap:16px;">
+    <div class="status-row">
+      <span class="chip" id="qCount">Question 1 / 50</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="chip">Score <b id="scoreChip">0</b></span>
+    </div>
+
+    <div class="card" id="card">
+      <p class="q-tag" id="qTag">Question No. 001</p>
+      <div class="q-emoji" id="qEmoji">🐘</div>
+      <p class="q-name" id="qName">Elephant</p>
+      <p class="feedback" id="feedback"></p>
+    </div>
+
+    <div class="answers" id="answers">
+      <button class="answer-btn" id="btnA" data-slot="a">
+        <span class="answer-icon" id="iconA">🐘</span>
+        <span class="answer-label" id="labelA">Big</span>
+      </button>
+      <button class="answer-btn" id="btnB" data-slot="b">
+        <span class="answer-icon" id="iconB">🐜</span>
+        <span class="answer-label" id="labelB">Small</span>
+      </button>
+    </div>
+
+    <div class="action-row">
+      <button class="primary-btn" id="nextBtn" disabled>Next question →</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <section class="panel" id="endScreen" hidden>
+    <p class="q-tag">Results</p>
+    <p class="grade" id="gradeLine">A−</p>
+    <p class="score-big">Final score <b id="finalScore">0</b> / 50</p>
+    <div class="tally-grid">
+      <div class="tally-cell"><div class="n" id="tallySize">0/0</div><div class="l">Big / Small</div></div>
+      <div class="tally-cell"><div class="n" id="tallyHeight">0/0</div><div class="l">Tall / Short</div></div>
+      <div class="tally-cell"><div class="n" id="tallyLength">0/0</div><div class="l">Long / Short</div></div>
+    </div>
+    <p class="best" id="bestScoreLineEnd" hidden></p>
+    <div class="action-row" style="gap:10px;">
+      <button class="primary-btn" id="playAgainBtn">Run it back</button>
+      <button class="ghost-btn" id="reviewBtn">Review misses</button>
+    </div>
+  </section>
+
+  <footer>the growth chart · measured with love</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var AXES = {
+    size:   {a:{key:"big",   label:"Big",   icon:"🐘"}, b:{key:"small",  label:"Small", icon:"🐜"}},
+    height: {a:{key:"tall",  label:"Tall",  icon:"🦒"}, b:{key:"short_h",label:"Short", icon:"🍄"}},
+    length: {a:{key:"long",  label:"Long",  icon:"🐍"}, b:{key:"short_l",label:"Short", icon:"✏️"}}
+  };
+  var AXIS_LABEL = {size:"Big / Small", height:"Tall / Short", length:"Long / Short"};
+
+  var ITEMS = [
+    {e:"🐘", n:"Elephant", axis:"size", ans:"big", f:"An elephant is huge! It's a BIG animal."},
+    {e:"🐋", n:"Whale", axis:"size", ans:"big", f:"A whale is enormous! It's the BIGGEST animal in the sea."},
+    {e:"🦖", n:"Dinosaur", axis:"size", ans:"big", f:"Dinosaurs were giant! They were BIG."},
+    {e:"🚚", n:"Truck", axis:"size", ans:"big", f:"A truck is much bigger than a car. It's BIG."},
+    {e:"🏠", n:"House", axis:"size", ans:"big", f:"A house is big enough for a whole family. It's BIG."},
+    {e:"⛰️", n:"Mountain", axis:"size", ans:"big", f:"A mountain is bigger than anything around it. It's BIG."},
+    {e:"✈️", n:"Airplane", axis:"size", ans:"big", f:"An airplane is huge, with room for lots of people. It's BIG."},
+    {e:"🚢", n:"Ship", axis:"size", ans:"big", f:"A big ship can carry hundreds of people. It's BIG."},
+    {e:"🚌", n:"School Bus", axis:"size", ans:"big", f:"A school bus is big enough for many kids. It's BIG."},
+    {e:"🐜", n:"Ant", axis:"size", ans:"small", f:"An ant is tiny! It's a SMALL bug."},
+    {e:"🐞", n:"Ladybug", axis:"size", ans:"small", f:"A ladybug fits on your fingertip. It's SMALL."},
+    {e:"🐭", n:"Mouse", axis:"size", ans:"small", f:"A mouse is little and quick. It's SMALL."},
+    {e:"🔘", n:"Button", axis:"size", ans:"small", f:"A button is tiny enough to fit through a buttonhole. It's SMALL."},
+    {e:"🫘", n:"Bean", axis:"size", ans:"small", f:"A bean fits in the palm of your hand. It's SMALL."},
+    {e:"🍚", n:"Grain of Rice", axis:"size", ans:"small", f:"A grain of rice is one of the tiniest foods. It's SMALL."},
+    {e:"🪙", n:"Coin", axis:"size", ans:"small", f:"A coin is small enough to fit in your pocket. It's SMALL."},
+    {e:"🐌", n:"Snail", axis:"size", ans:"small", f:"A snail is small and slow. It's SMALL."},
+
+    {e:"🦒", n:"Giraffe", axis:"height", ans:"tall", f:"A giraffe has a very long neck. It's TALL!"},
+    {e:"🌳", n:"Tree", axis:"height", ans:"tall", f:"A tree grows way up into the sky. It's TALL!"},
+    {e:"🏢", n:"Skyscraper", axis:"height", ans:"tall", f:"A skyscraper reaches way up high. It's TALL!"},
+    {e:"🗼", n:"Tower", axis:"height", ans:"tall", f:"A tower stretches way up into the sky. It's TALL!"},
+    {e:"🪜", n:"Ladder", axis:"height", ans:"tall", f:"A tall ladder helps you reach way up high. It's TALL!"},
+    {e:"🏗️", n:"Crane", axis:"height", ans:"tall", f:"A construction crane towers over buildings. It's TALL!"},
+    {e:"🚩", n:"Flagpole", axis:"height", ans:"tall", f:"A flagpole stands way up high. It's TALL!"},
+    {e:"🚦", n:"Traffic Light", axis:"height", ans:"tall", f:"A traffic light stands up high on its pole. It's TALL!"},
+    {e:"🍄", n:"Mushroom", axis:"height", ans:"short_h", f:"A mushroom grows low to the ground. It's SHORT."},
+    {e:"🐢", n:"Turtle", axis:"height", ans:"short_h", f:"A turtle is low and close to the ground. It's SHORT."},
+    {e:"🐸", n:"Frog", axis:"height", ans:"short_h", f:"A frog sits low to the ground. It's SHORT."},
+    {e:"🐶", n:"Puppy", axis:"height", ans:"short_h", f:"A puppy is small and close to the ground. It's SHORT."},
+    {e:"🦆", n:"Duck", axis:"height", ans:"short_h", f:"A duck waddles low to the ground. It's SHORT."},
+    {e:"🦔", n:"Hedgehog", axis:"height", ans:"short_h", f:"A hedgehog is tiny and low to the ground. It's SHORT."},
+    {e:"🐧", n:"Penguin", axis:"height", ans:"short_h", f:"A penguin waddles on short little legs. It's SHORT."},
+    {e:"🐰", n:"Bunny", axis:"height", ans:"short_h", f:"A bunny is small and close to the ground. It's SHORT."},
+    {e:"🪑", n:"Stool", axis:"height", ans:"short_h", f:"A little stool sits low to the ground. It's SHORT."},
+
+    {e:"🐍", n:"Snake", axis:"length", ans:"long", f:"A snake's body stretches way out. It's LONG!"},
+    {e:"🚂", n:"Train", axis:"length", ans:"long", f:"A train has so many cars all in a row. It's LONG!"},
+    {e:"🧣", n:"Scarf", axis:"length", ans:"long", f:"A scarf wraps all the way around your neck. It's LONG!"},
+    {e:"🪢", n:"Rope", axis:"length", ans:"long", f:"A rope stretches out really far. It's LONG!"},
+    {e:"📏", n:"Ruler", axis:"length", ans:"long", f:"A long ruler stretches out to measure big things. It's LONG!"},
+    {e:"🐊", n:"Alligator", axis:"length", ans:"long", f:"An alligator has a long body and a long tail. It's LONG!"},
+    {e:"🐛", n:"Caterpillar", axis:"length", ans:"long", f:"A caterpillar's body stretches out long. It's LONG!"},
+    {e:"🥖", n:"Baguette", axis:"length", ans:"long", f:"A baguette is a loaf of bread that stretches out long. It's LONG!"},
+    {e:"✏️", n:"Pencil", axis:"length", ans:"short_l", f:"A little pencil fits in your hand. It's SHORT."},
+    {e:"🧦", n:"Sock", axis:"length", ans:"short_l", f:"A sock only covers your foot and ankle. It's SHORT."},
+    {e:"🪵", n:"Twig", axis:"length", ans:"short_l", f:"A little twig snapped off a branch. It's SHORT."},
+    {e:"🖍️", n:"Crayon", axis:"length", ans:"short_l", f:"A crayon is short enough to hold in your fist. It's SHORT."},
+    {e:"📎", n:"Paperclip", axis:"length", ans:"short_l", f:"A paperclip is tiny and short. It's SHORT."},
+    {e:"🔑", n:"Key", axis:"length", ans:"short_l", f:"A key is short enough to fit on a keyring. It's SHORT."},
+    {e:"🥄", n:"Spoon", axis:"length", ans:"short_l", f:"A spoon is short enough to hold while you eat. It's SHORT."},
+    {e:"🪥", n:"Toothbrush", axis:"length", ans:"short_l", f:"A toothbrush is short enough to hold in your hand. It's SHORT."}
+  ];
+
+  var els = {
+    startScreen: document.getElementById("startScreen"),
+    gameScreen: document.getElementById("gameScreen"),
+    endScreen: document.getElementById("endScreen"),
+    startBtn: document.getElementById("startBtn"),
+    playAgainBtn: document.getElementById("playAgainBtn"),
+    reviewBtn: document.getElementById("reviewBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    qCount: document.getElementById("qCount"),
+    progressFill: document.getElementById("progressFill"),
+    scoreChip: document.getElementById("scoreChip"),
+    card: document.getElementById("card"),
+    qTag: document.getElementById("qTag"),
+    qEmoji: document.getElementById("qEmoji"),
+    qName: document.getElementById("qName"),
+    feedback: document.getElementById("feedback"),
+    btnA: document.getElementById("btnA"),
+    btnB: document.getElementById("btnB"),
+    iconA: document.getElementById("iconA"),
+    iconB: document.getElementById("iconB"),
+    labelA: document.getElementById("labelA"),
+    labelB: document.getElementById("labelB"),
+    gradeLine: document.getElementById("gradeLine"),
+    finalScore: document.getElementById("finalScore"),
+    tallySize: document.getElementById("tallySize"),
+    tallyHeight: document.getElementById("tallyHeight"),
+    tallyLength: document.getElementById("tallyLength"),
+    bestScoreLine: document.getElementById("bestScoreLine"),
+    bestScoreLineEnd: document.getElementById("bestScoreLineEnd"),
+    subtitle: document.getElementById("subtitle")
+  };
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function getBest(){
+    try{
+      var v = localStorage.getItem("bigsmall_best");
+      return v ? parseInt(v, 10) : null;
+    }catch(e){ return null; }
+  }
+  function setBest(score){
+    try{ localStorage.setItem("bigsmall_best", String(score)); }catch(e){}
+  }
+
+  var order = [];
+  var index = 0;
+  var score = 0;
+  var answered = false;
+  var misses = [];
+  var tally = {
+    size:{correct:0,total:0},
+    height:{correct:0,total:0},
+    length:{correct:0,total:0}
+  };
+
+  function showScreen(name){
+    els.startScreen.hidden = name !== "start";
+    els.gameScreen.hidden = name !== "game";
+    els.endScreen.hidden = name !== "end";
+    els.subtitle.textContent = name === "start"
+      ? "Is it big or small? Tall or short? Long or short? Let's find out!"
+      : name === "game"
+        ? "What do you think this is?"
+        : "All done! Let's see how you did.";
+  }
+
+  function startGame(){
+    order = shuffle(ITEMS.map(function(_, i){ return i; }));
+    index = 0;
+    score = 0;
+    misses = [];
+    tally = {size:{correct:0,total:0}, height:{correct:0,total:0}, length:{correct:0,total:0}};
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    answered = false;
+    var item = ITEMS[order[index]];
+    var opts = AXES[item.axis];
+    els.qTag.textContent = "Question No. " + String(index + 1).padStart(3, "0");
+    els.qEmoji.textContent = item.e;
+    els.qName.textContent = item.n;
+    els.feedback.textContent = "";
+    els.feedback.className = "feedback";
+    els.card.classList.remove("correct", "wrong");
+    els.qCount.innerHTML = "Question " + (index + 1) + " / " + ITEMS.length;
+    els.progressFill.style.transform = "scaleX(" + (index / ITEMS.length) + ")";
+    els.scoreChip.textContent = score;
+    els.nextBtn.disabled = true;
+    els.nextBtn.textContent = (index === ITEMS.length - 1) ? "See results →" : "Next question →";
+
+    els.iconA.textContent = opts.a.icon;
+    els.labelA.textContent = opts.a.label;
+    els.btnA.style.setProperty("--tone", "var(--more)");
+    els.btnA.setAttribute("data-key", opts.a.key);
+
+    els.iconB.textContent = opts.b.icon;
+    els.labelB.textContent = opts.b.label;
+    els.btnB.style.setProperty("--tone", "var(--less)");
+    els.btnB.setAttribute("data-key", opts.b.key);
+
+    [els.btnA, els.btnB].forEach(function(btn){
+      btn.disabled = false;
+      btn.classList.remove("chosen-correct", "chosen-wrong", "reveal-correct");
+    });
+  }
+
+  function submitAnswer(chosenKey){
+    if(answered) return;
+    answered = true;
+    var item = ITEMS[order[index]];
+    var correct = chosenKey === item.ans;
+
+    tally[item.axis].total++;
+    if(correct){
+      score++;
+      tally[item.axis].correct++;
+    } else {
+      misses.push(item);
+    }
+
+    els.scoreChip.textContent = score;
+    els.card.classList.add(correct ? "correct" : "wrong");
+    els.feedback.className = "feedback " + (correct ? "correct" : "wrong");
+    els.feedback.innerHTML = "<span class=\"verdict\">" + (correct ? "✓ Correct!" : "✕ Not quite") + "</span>" + item.f;
+
+    [els.btnA, els.btnB].forEach(function(btn){
+      btn.disabled = true;
+      var key = btn.getAttribute("data-key");
+      if(key === item.ans){
+        btn.classList.add(correct ? "chosen-correct" : "reveal-correct");
+      } else if(key === chosenKey){
+        btn.classList.add("chosen-wrong");
+      }
+    });
+
+    els.nextBtn.disabled = false;
+    els.nextBtn.focus();
+  }
+
+  function nextQuestion(){
+    if(index >= ITEMS.length - 1){
+      endGame();
+      return;
+    }
+    index++;
+    renderQuestion();
+  }
+
+  function gradeFor(pct){
+    if(pct >= 96) return "A+";
+    if(pct >= 90) return "A";
+    if(pct >= 85) return "A−";
+    if(pct >= 80) return "B+";
+    if(pct >= 70) return "B";
+    if(pct >= 60) return "C";
+    if(pct >= 45) return "D";
+    return "F";
+  }
+
+  function endGame(){
+    els.progressFill.style.transform = "scaleX(1)";
+    var pct = (score / ITEMS.length) * 100;
+    els.gradeLine.textContent = gradeFor(pct);
+    els.finalScore.textContent = score;
+    els.tallySize.textContent = tally.size.correct + "/" + tally.size.total;
+    els.tallyHeight.textContent = tally.height.correct + "/" + tally.height.total;
+    els.tallyLength.textContent = tally.length.correct + "/" + tally.length.total;
+
+    var best = getBest();
+    if(best === null || score > best){
+      setBest(score);
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "★ New best score!";
+    } else {
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + ITEMS.length;
+    }
+    els.reviewBtn.hidden = misses.length === 0;
+    showScreen("end");
+  }
+
+  function reviewMisses(){
+    if(misses.length === 0) return;
+    var text = misses.map(function(m){
+      var opts = AXES[m.axis];
+      var correctLabel = (m.ans === opts.a.key) ? opts.a.label : opts.b.label;
+      return m.e + " " + m.n + " — " + correctLabel;
+    }).join("\n");
+    alert("Questions you missed:\n\n" + text);
+  }
+
+  els.btnA.addEventListener("click", function(){ submitAnswer(els.btnA.getAttribute("data-key")); });
+  els.btnB.addEventListener("click", function(){ submitAnswer(els.btnB.getAttribute("data-key")); });
+  els.nextBtn.addEventListener("click", nextQuestion);
+  els.startBtn.addEventListener("click", startGame);
+  els.playAgainBtn.addEventListener("click", startGame);
+  els.reviewBtn.addEventListener("click", reviewMisses);
+
+  document.addEventListener("keydown", function(e){
+    if(!els.gameScreen.hidden){
+      var k = e.key.toLowerCase();
+      if(!answered){
+        if(k === "1" || k === "a") submitAnswer(els.btnA.getAttribute("data-key"));
+        else if(k === "2" || k === "b") submitAnswer(els.btnB.getAttribute("data-key"));
+      } else if(k === "enter" || k === " "){
+        e.preventDefault();
+        nextQuestion();
+      }
+    } else if(!els.startScreen.hidden && (e.key === "Enter")){
+      startGame();
+    }
+  });
+
+  var best0 = getBest();
+  if(best0 !== null){
+    els.bestScoreLine.hidden = false;
+    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + ITEMS.length;
+  }
+
+  function snapshot(){
+    return {
+      screen: els.startScreen.hidden ? (els.endScreen.hidden ? "game" : "end") : "start",
+      order: order, index: index, score: score, tally: tally, misses: misses
+    };
+  }
+  function boot(data){
+    if(data && data.order && data.order.length){
+      order = data.order; index = data.index || 0; score = data.score || 0;
+      tally = data.tally || tally; misses = data.misses || [];
+      if(data.screen === "end"){ endGame(); }
+      else if(data.screen === "game"){ showScreen("game"); renderQuestion(); }
+      else { showScreen("start"); }
+    } else {
+      showScreen("start");
+    }
+  }
+  if(window.claude && window.claude.hot){
+    window.claude.hot.snapshot(snapshot);
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot(window.claude.hot.data);
+  } else {
+    showScreen("start");
+  }
+})();
+</script>
+</body>
+</html>

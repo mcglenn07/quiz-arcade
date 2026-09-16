@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic Shapes</title>
+<meta name="description" content="A 50-question picture quiz matching everyday things to circle, square, triangle, rectangle, star, or heart.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔺</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --wall:#eafaf1;
+    --ink:#25392f;
+    --ink-dim:#5a7568;
+    --ink-faint:#7f9a8c;
+    --panel:#ffffff;
+    --circle:#3fa7ff;
+    --square:#ff9f40;
+    --triangle:#ff5c5c;
+    --rectangle:#9b6bff;
+    --star:#ffc93f;
+    --heart:#ff6fa5;
+    --correct:#4caf50;
+    --wrong:#ef5757;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(255,255,255,0.7), transparent 60%),
+      var(--wall);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100dvh;
+    padding:22px 16px 26px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:640px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:10px;
+  }
+
+  header{ text-align:center; }
+  .breadcrumb{
+    display:inline-block;
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:0.82rem;
+    font-weight:500;
+    color:var(--ink-dim);
+    text-decoration:none;
+    margin-bottom:10px;
+    border-bottom:1px solid transparent;
+  }
+  .breadcrumb:hover{ color:var(--ink); border-bottom-color:var(--ink-faint); }
+  .breadcrumb:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  h1{
+    font-family:"Baloo 2", cursive;
+    font-weight:800;
+    font-size:clamp(2.4rem, 7.5vw, 3.3rem);
+    margin:0;
+    line-height:1;
+    color:#256b46;
+  }
+  .subtitle{
+    color:var(--ink-dim);
+    font-size:0.95rem;
+    margin-top:6px;
+  }
+
+  .status-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px;
+    border:1.5px dashed var(--ink-faint);
+    border-radius:999px;
+    white-space:nowrap;
+    background:var(--panel);
+  }
+  .chip b{ color:var(--ink); font-weight:700; }
+  .progress-track{
+    position:relative;
+    flex:1;
+    height:8px;
+    border-radius:999px;
+    background:rgba(37,57,47,0.1);
+    overflow:hidden;
+    min-width:60px;
+  }
+  .progress-fill{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(90deg, var(--circle), var(--star), var(--heart));
+    border-radius:999px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.35s ease;
+  }
+
+  .panel, .card{
+    border:3px solid rgba(37,57,47,0.12);
+    border-radius:22px;
+    padding:30px 24px 26px;
+    text-align:center;
+    background:var(--panel);
+    box-shadow:0 10px 24px rgba(37,57,47,0.08);
+    position:relative;
+  }
+  .card{ transition:border-color 0.25s ease, background 0.25s ease; }
+  .card.correct{ border-color:var(--correct); background:#eefbef; }
+  .card.wrong{ border-color:var(--wrong); background:#fdeeee; }
+
+  .q-tag{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:10px;
+  }
+  .q-emoji{
+    font-size:5rem;
+    line-height:1;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.15));
+  }
+  .q-name{
+    font-family:"Baloo 2", cursive;
+    font-weight:700;
+    font-size:clamp(1.7rem, 5.5vw, 2.2rem);
+    margin:8px 0 0;
+    text-wrap:balance;
+  }
+
+  .feedback{
+    margin-top:14px;
+    min-height:1.4em;
+    font-size:0.95rem;
+    color:var(--ink-dim);
+  }
+  .feedback .verdict{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:700;
+    letter-spacing:0.04em;
+    display:block;
+    margin-bottom:4px;
+  }
+  .feedback.correct .verdict{ color:var(--correct); }
+  .feedback.wrong .verdict{ color:var(--wrong); }
+
+  .answers{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  @media (max-width:480px){
+    .answers{ grid-template-columns:repeat(2, 1fr); }
+  }
+  .answer-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    color:var(--ink);
+    background:var(--tone, var(--ink-faint));
+    border:4px solid rgba(255,255,255,0.65);
+    border-radius:22px;
+    padding:16px 6px 12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.18);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); }
+  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.18); }
+  .answer-btn:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
+  .answer-btn[data-shape="circle"]{ --tone:var(--circle); }
+  .answer-btn[data-shape="square"]{ --tone:var(--square); }
+  .answer-btn[data-shape="triangle"]{ --tone:var(--triangle); }
+  .answer-btn[data-shape="rectangle"]{ --tone:var(--rectangle); }
+  .answer-btn[data-shape="star"]{ --tone:var(--star); }
+  .answer-btn[data-shape="heart"]{ --tone:var(--heart); }
+  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
+  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--wrong); }
+  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
+  .answer-btn:disabled{ cursor:default; }
+  .answer-btn:disabled:hover{ transform:none; }
+
+  .answer-icon{ width:34px; height:34px; }
+  .answer-icon svg{ width:100%; height:100%; display:block; fill:currentColor; }
+  @media (prefers-reduced-motion:no-preference){
+    .answer-btn:hover .answer-icon{ animation:jiggle 0.5s ease-in-out; }
+  }
+  @keyframes jiggle{
+    0%,100%{ transform:rotate(0deg) scale(1); }
+    25%{ transform:rotate(-8deg) scale(1.05); }
+    75%{ transform:rotate(8deg) scale(1.05); }
+  }
+
+  .primary-btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    color:#fff;
+    background:#256b46;
+    border:none;
+    border-radius:14px;
+    padding:13px 22px;
+    cursor:pointer;
+    align-self:center;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .primary-btn:hover{ transform:translateY(-2px); }
+  .primary-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+  .primary-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+
+  .ghost-btn{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    background:transparent;
+    border:1.5px dashed var(--ink-faint);
+    border-radius:10px;
+    padding:8px 14px;
+    cursor:pointer;
+    align-self:center;
+  }
+  .ghost-btn:hover{ color:var(--ink); border-color:var(--ink-dim); }
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    min-height:48px;
+    align-items:center;
+  }
+
+  footer{
+    margin-top:auto;
+    padding-top:18px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    color:var(--ink-dim);
+    text-align:center;
+  }
+
+  .panel{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+  .legend{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend .dot{ width:12px; height:12px; border-radius:50%; display:inline-block; }
+
+  .best{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+  }
+
+  .grade{
+    font-family:"Baloo 2", cursive;
+    font-weight:800;
+    font-size:clamp(2.3rem, 7.5vw, 3rem);
+    margin:0;
+    color:#256b46;
+  }
+  .score-big{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1rem;
+    color:var(--ink-dim);
+  }
+  .score-big b{ color:var(--ink); font-size:1.5rem; }
+
+  .tally-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    width:100%;
+  }
+  .tally-cell{
+    border:1.5px solid rgba(37,57,47,0.15);
+    border-radius:12px;
+    padding:8px 4px;
+    font-family:"IBM Plex Mono", monospace;
+  }
+  .tally-cell .n{ font-size:1.15rem; font-weight:700; color:var(--ink); }
+  .tally-cell .l{ font-size:0.62rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px; }
+
+  [hidden]{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="breadcrumb" href="index.html">← The Sorting Shelf</a>
+    <h1>Basic Shapes</h1>
+    <p class="subtitle" id="subtitle">What shape is this? Let's find out!</p>
+  </header>
+
+  <!-- START SCREEN -->
+  <section class="panel" id="startScreen">
+    <p style="margin:0; color:var(--ink-dim); max-width:46ch;">
+      We'll show you something. You tap the shape it looks like!
+    </p>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--circle)"></span>Circle</span>
+      <span><span class="dot" style="background:var(--square)"></span>Square</span>
+      <span><span class="dot" style="background:var(--triangle)"></span>Triangle</span>
+      <span><span class="dot" style="background:var(--rectangle)"></span>Rectangle</span>
+      <span><span class="dot" style="background:var(--star)"></span>Star</span>
+      <span><span class="dot" style="background:var(--heart)"></span>Heart</span>
+    </div>
+    <p class="best" id="bestScoreLine" hidden></p>
+    <button class="primary-btn" id="startBtn">Let's Play! →</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" hidden style="display:flex; flex-direction:column; gap:16px;">
+    <div class="status-row">
+      <span class="chip" id="qCount">Question 1 / 50</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="chip">Score <b id="scoreChip">0</b></span>
+    </div>
+
+    <div class="card" id="card">
+      <p class="q-tag" id="qTag">Question No. 001</p>
+      <div class="q-emoji" id="qEmoji">⚽</div>
+      <p class="q-name" id="qName">Ball</p>
+      <p class="feedback" id="feedback"></p>
+    </div>
+
+    <div class="answers" id="answers">
+      <button class="answer-btn" data-shape="circle">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></span>
+        <span class="answer-label">Circle</span>
+      </button>
+      <button class="answer-btn" data-shape="square">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span>
+        <span class="answer-label">Square</span>
+      </button>
+      <button class="answer-btn" data-shape="triangle">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><polygon points="12,3 21,20 3,20"/></svg></span>
+        <span class="answer-label">Triangle</span>
+      </button>
+      <button class="answer-btn" data-shape="rectangle">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/></svg></span>
+        <span class="answer-label">Rectangle</span>
+      </button>
+      <button class="answer-btn" data-shape="star">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+        <span class="answer-label">Star</span>
+      </button>
+      <button class="answer-btn" data-shape="heart">
+        <span class="answer-icon"><svg viewBox="0 0 24 24"><path d="M12 21s-6.7-4.3-9.5-8.3C.8 10.1 1 6.6 3.6 4.6 6 2.8 9 3.4 12 6.3 15 3.4 18 2.8 20.4 4.6c2.6 2 2.8 5.5 1.1 8.1C18.7 16.7 12 21 12 21z"/></svg></span>
+        <span class="answer-label">Heart</span>
+      </button>
+    </div>
+
+    <div class="action-row">
+      <button class="primary-btn" id="nextBtn" disabled>Next question →</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <section class="panel" id="endScreen" hidden>
+    <p class="q-tag">Results</p>
+    <p class="grade" id="gradeLine">A−</p>
+    <p class="score-big">Final score <b id="finalScore">0</b> / 50</p>
+    <div class="tally-grid">
+      <div class="tally-cell"><div class="n" id="tallyCircle">0/0</div><div class="l">Circle</div></div>
+      <div class="tally-cell"><div class="n" id="tallySquare">0/0</div><div class="l">Square</div></div>
+      <div class="tally-cell"><div class="n" id="tallyTriangle">0/0</div><div class="l">Triangle</div></div>
+      <div class="tally-cell"><div class="n" id="tallyRectangle">0/0</div><div class="l">Rectangle</div></div>
+      <div class="tally-cell"><div class="n" id="tallyStar">0/0</div><div class="l">Star</div></div>
+      <div class="tally-cell"><div class="n" id="tallyHeart">0/0</div><div class="l">Heart</div></div>
+    </div>
+    <p class="best" id="bestScoreLineEnd" hidden></p>
+    <div class="action-row" style="gap:10px;">
+      <button class="primary-btn" id="playAgainBtn">Run it back</button>
+      <button class="ghost-btn" id="reviewBtn">Review misses</button>
+    </div>
+  </section>
+
+  <footer>the toy box · shapes for small hands</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SHAPE_LABEL = {circle:"Circle", square:"Square", triangle:"Triangle", rectangle:"Rectangle", star:"Star", heart:"Heart"};
+
+  var ITEMS = [
+    {e:"⚽", n:"Ball", s:"circle", f:"A ball is round all the way around. It's a CIRCLE!"},
+    {e:"🕐", n:"Clock", s:"circle", f:"A clock face is round. It's a CIRCLE!"},
+    {e:"🍩", n:"Donut", s:"circle", f:"A donut is round with a hole in the middle. It's a CIRCLE!"},
+    {e:"☀️", n:"Sun", s:"circle", f:"The sun looks like a big round circle in the sky!"},
+    {e:"🪙", n:"Coin", s:"circle", f:"A coin is flat and round. It's a CIRCLE!"},
+    {e:"🍪", n:"Cookie", s:"circle", f:"A cookie is round and yummy. It's a CIRCLE!"},
+    {e:"🛞", n:"Wheel", s:"circle", f:"A wheel is round so it can roll. It's a CIRCLE!"},
+    {e:"🍊", n:"Orange", s:"circle", f:"An orange is round like a ball. It's a CIRCLE!"},
+    {e:"🎈", n:"Balloon", s:"circle", f:"A balloon puffs up round and round. It's a CIRCLE!"},
+    {e:"🌕", n:"Full Moon", s:"circle", f:"A full moon looks round and bright. It's a CIRCLE!"},
+
+    {e:"🎁", n:"Gift Box", s:"square", f:"A gift box has four equal sides. It's a SQUARE!"},
+    {e:"🎲", n:"Dice", s:"square", f:"Each side of a die is a perfect SQUARE!"},
+    {e:"🧇", n:"Waffle", s:"square", f:"A waffle is cut into little squares!"},
+    {e:"🖼️", n:"Picture Frame", s:"square", f:"A picture frame has four equal sides. It's a SQUARE!"},
+    {e:"🧊", n:"Ice Cube", s:"square", f:"An ice cube's face is a SQUARE!"},
+    {e:"🗒️", n:"Sticky Note", s:"square", f:"A sticky note has four equal sides. It's a SQUARE!"},
+    {e:"🪟", n:"Window Pane", s:"square", f:"A window pane has four equal sides. It's a SQUARE!"},
+    {e:"🧻", n:"Tissue Box", s:"square", f:"A tissue box top is a SQUARE!"},
+    {e:"🍘", n:"Cracker", s:"square", f:"A cracker is cut into a SQUARE!"},
+
+    {e:"🍕", n:"Pizza Slice", s:"triangle", f:"A slice of pizza has three sides. It's a TRIANGLE!"},
+    {e:"🍦", n:"Ice Cream Cone", s:"triangle", f:"An ice cream cone comes to a point. It's shaped like a TRIANGLE!"},
+    {e:"🍉", n:"Watermelon Slice", s:"triangle", f:"A watermelon wedge has three sides. It's a TRIANGLE!"},
+    {e:"⛺", n:"Tent", s:"triangle", f:"A camping tent comes to a point on top. It's a TRIANGLE!"},
+    {e:"🧀", n:"Cheese Wedge", s:"triangle", f:"A wedge of cheese has three sides. It's a TRIANGLE!"},
+    {e:"🔺", n:"Warning Sign", s:"triangle", f:"A warning sign has three sides. It's a TRIANGLE!"},
+    {e:"🚧", n:"Traffic Cone", s:"triangle", f:"A traffic cone comes to a point. It's shaped like a TRIANGLE!"},
+    {e:"⛵", n:"Sailboat Sail", s:"triangle", f:"A sailboat's sail has three sides. It's a TRIANGLE!"},
+    {e:"🍰", n:"Cake Slice", s:"triangle", f:"A slice of cake has three sides. It's a TRIANGLE!"},
+
+    {e:"🚪", n:"Door", s:"rectangle", f:"A door is tall with four sides. It's a RECTANGLE!"},
+    {e:"📖", n:"Book", s:"rectangle", f:"A book is longer than it is wide. It's a RECTANGLE!"},
+    {e:"📺", n:"TV", s:"rectangle", f:"A TV screen is wider than it is tall. It's a RECTANGLE!"},
+    {e:"✉️", n:"Envelope", s:"rectangle", f:"An envelope has four sides. It's a RECTANGLE!"},
+    {e:"🛏️", n:"Bed", s:"rectangle", f:"A bed is longer than it is wide. It's a RECTANGLE!"},
+    {e:"📏", n:"Ruler", s:"rectangle", f:"A ruler is long and thin. It's a RECTANGLE!"},
+    {e:"🧱", n:"Brick", s:"rectangle", f:"A brick's face has four sides. It's a RECTANGLE!"},
+    {e:"📱", n:"Phone", s:"rectangle", f:"A phone is taller than it is wide. It's a RECTANGLE!"},
+    {e:"🍫", n:"Chocolate Bar", s:"rectangle", f:"A chocolate bar is long with four sides. It's a RECTANGLE!"},
+
+    {e:"⭐", n:"Night Star", s:"star", f:"A twinkling star in the sky has five points. It's a STAR!"},
+    {e:"🌠", n:"Shooting Star", s:"star", f:"A shooting star streaks by with pointy tips. It's a STAR!"},
+    {e:"✨", n:"Sparkle", s:"star", f:"A sparkle shines with pointy little tips. It's a STAR!"},
+    {e:"🌟", n:"Glowing Star", s:"star", f:"A glowing star has five points. It's a STAR!"},
+    {e:"💫", n:"Dizzy Stars", s:"star", f:"Even dizzy stars have that pointy STAR shape!"},
+
+    {e:"💝", n:"Heart Box of Chocolates", s:"heart", f:"A box of chocolates shaped like a HEART!"},
+    {e:"💌", n:"Love Letter", s:"heart", f:"A love letter has a little HEART on it!"},
+    {e:"🍓", n:"Strawberry", s:"heart", f:"A strawberry curves in at the top, like a HEART!"},
+    {e:"❤️", n:"Heart Sticker", s:"heart", f:"A heart sticker has that curvy HEART shape!"},
+    {e:"💕", n:"Two Hearts", s:"heart", f:"Two little HEARTS side by side!"},
+    {e:"💘", n:"Heart with Arrow", s:"heart", f:"A HEART with an arrow through it!"},
+    {e:"♥️", n:"Heart Suit", s:"heart", f:"The heart suit from a card deck. It's a HEART!"},
+    {e:"💗", n:"Growing Heart", s:"heart", f:"A HEART that grows bigger and bigger!"}
+  ];
+
+  var els = {
+    startScreen: document.getElementById("startScreen"),
+    gameScreen: document.getElementById("gameScreen"),
+    endScreen: document.getElementById("endScreen"),
+    startBtn: document.getElementById("startBtn"),
+    playAgainBtn: document.getElementById("playAgainBtn"),
+    reviewBtn: document.getElementById("reviewBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    qCount: document.getElementById("qCount"),
+    progressFill: document.getElementById("progressFill"),
+    scoreChip: document.getElementById("scoreChip"),
+    card: document.getElementById("card"),
+    qTag: document.getElementById("qTag"),
+    qEmoji: document.getElementById("qEmoji"),
+    qName: document.getElementById("qName"),
+    feedback: document.getElementById("feedback"),
+    answers: document.getElementById("answers"),
+    gradeLine: document.getElementById("gradeLine"),
+    finalScore: document.getElementById("finalScore"),
+    tallyCircle: document.getElementById("tallyCircle"),
+    tallySquare: document.getElementById("tallySquare"),
+    tallyTriangle: document.getElementById("tallyTriangle"),
+    tallyRectangle: document.getElementById("tallyRectangle"),
+    tallyStar: document.getElementById("tallyStar"),
+    tallyHeart: document.getElementById("tallyHeart"),
+    bestScoreLine: document.getElementById("bestScoreLine"),
+    bestScoreLineEnd: document.getElementById("bestScoreLineEnd"),
+    subtitle: document.getElementById("subtitle")
+  };
+
+  var answerButtons = Array.prototype.slice.call(els.answers.querySelectorAll(".answer-btn"));
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function getBest(){
+    try{
+      var v = localStorage.getItem("basicshapes_best");
+      return v ? parseInt(v, 10) : null;
+    }catch(e){ return null; }
+  }
+  function setBest(score){
+    try{ localStorage.setItem("basicshapes_best", String(score)); }catch(e){}
+  }
+
+  var order = [];
+  var index = 0;
+  var score = 0;
+  var answered = false;
+  var misses = [];
+  var tally = {
+    circle:{correct:0,total:0}, square:{correct:0,total:0}, triangle:{correct:0,total:0},
+    rectangle:{correct:0,total:0}, star:{correct:0,total:0}, heart:{correct:0,total:0}
+  };
+
+  function showScreen(name){
+    els.startScreen.hidden = name !== "start";
+    els.gameScreen.hidden = name !== "game";
+    els.endScreen.hidden = name !== "end";
+    els.subtitle.textContent = name === "start"
+      ? "What shape is this? Let's find out!"
+      : name === "game"
+        ? "What shape do you see?"
+        : "All done! Let's see how you did.";
+  }
+
+  function startGame(){
+    order = shuffle(ITEMS.map(function(_, i){ return i; }));
+    index = 0;
+    score = 0;
+    misses = [];
+    tally = {
+      circle:{correct:0,total:0}, square:{correct:0,total:0}, triangle:{correct:0,total:0},
+      rectangle:{correct:0,total:0}, star:{correct:0,total:0}, heart:{correct:0,total:0}
+    };
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    answered = false;
+    var item = ITEMS[order[index]];
+    els.qTag.textContent = "Question No. " + String(index + 1).padStart(3, "0");
+    els.qEmoji.textContent = item.e;
+    els.qName.textContent = item.n;
+    els.feedback.textContent = "";
+    els.feedback.className = "feedback";
+    els.card.classList.remove("correct", "wrong");
+    els.qCount.innerHTML = "Question " + (index + 1) + " / " + ITEMS.length;
+    els.progressFill.style.transform = "scaleX(" + (index / ITEMS.length) + ")";
+    els.scoreChip.textContent = score;
+    els.nextBtn.disabled = true;
+    els.nextBtn.textContent = (index === ITEMS.length - 1) ? "See results →" : "Next question →";
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = false;
+      btn.classList.remove("chosen-correct", "chosen-wrong", "reveal-correct");
+    });
+  }
+
+  function submitAnswer(chosenShape){
+    if(answered) return;
+    answered = true;
+    var item = ITEMS[order[index]];
+    var correct = chosenShape === item.s;
+
+    tally[item.s].total++;
+    if(correct){
+      score++;
+      tally[item.s].correct++;
+    } else {
+      misses.push(item);
+    }
+
+    els.scoreChip.textContent = score;
+    els.card.classList.add(correct ? "correct" : "wrong");
+    els.feedback.className = "feedback " + (correct ? "correct" : "wrong");
+    els.feedback.innerHTML = "<span class=\"verdict\">" +
+      (correct ? "✓ Correct — " + SHAPE_LABEL[item.s] : "✕ Actually a " + SHAPE_LABEL[item.s]) +
+      "</span>" + item.f;
+
+    answerButtons.forEach(function(btn){
+      btn.disabled = true;
+      var shape = btn.getAttribute("data-shape");
+      if(shape === item.s){
+        btn.classList.add(correct ? "chosen-correct" : "reveal-correct");
+      } else if(shape === chosenShape){
+        btn.classList.add("chosen-wrong");
+      }
+    });
+
+    els.nextBtn.disabled = false;
+    els.nextBtn.focus();
+  }
+
+  function nextQuestion(){
+    if(index >= ITEMS.length - 1){
+      endGame();
+      return;
+    }
+    index++;
+    renderQuestion();
+  }
+
+  function gradeFor(pct){
+    if(pct >= 96) return "A+";
+    if(pct >= 90) return "A";
+    if(pct >= 85) return "A−";
+    if(pct >= 80) return "B+";
+    if(pct >= 70) return "B";
+    if(pct >= 60) return "C";
+    if(pct >= 45) return "D";
+    return "F";
+  }
+
+  function endGame(){
+    els.progressFill.style.transform = "scaleX(1)";
+    var pct = (score / ITEMS.length) * 100;
+    els.gradeLine.textContent = gradeFor(pct);
+    els.finalScore.textContent = score;
+    els.tallyCircle.textContent = tally.circle.correct + "/" + tally.circle.total;
+    els.tallySquare.textContent = tally.square.correct + "/" + tally.square.total;
+    els.tallyTriangle.textContent = tally.triangle.correct + "/" + tally.triangle.total;
+    els.tallyRectangle.textContent = tally.rectangle.correct + "/" + tally.rectangle.total;
+    els.tallyStar.textContent = tally.star.correct + "/" + tally.star.total;
+    els.tallyHeart.textContent = tally.heart.correct + "/" + tally.heart.total;
+
+    var best = getBest();
+    if(best === null || score > best){
+      setBest(score);
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "★ New best score!";
+    } else {
+      els.bestScoreLineEnd.hidden = false;
+      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + ITEMS.length;
+    }
+    els.reviewBtn.hidden = misses.length === 0;
+    showScreen("end");
+  }
+
+  function reviewMisses(){
+    if(misses.length === 0) return;
+    var text = misses.map(function(m){
+      return m.e + " " + m.n + " — " + SHAPE_LABEL[m.s];
+    }).join("\n");
+    alert("Questions you missed:\n\n" + text);
+  }
+
+  answerButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      submitAnswer(btn.getAttribute("data-shape"));
+    });
+  });
+  els.nextBtn.addEventListener("click", nextQuestion);
+  els.startBtn.addEventListener("click", startGame);
+  els.playAgainBtn.addEventListener("click", startGame);
+  els.reviewBtn.addEventListener("click", reviewMisses);
+
+  document.addEventListener("keydown", function(e){
+    if(!els.gameScreen.hidden){
+      var k = e.key;
+      if(!answered){
+        if(k === "1") submitAnswer("circle");
+        else if(k === "2") submitAnswer("square");
+        else if(k === "3") submitAnswer("triangle");
+        else if(k === "4") submitAnswer("rectangle");
+        else if(k === "5") submitAnswer("star");
+        else if(k === "6") submitAnswer("heart");
+      } else if(k === "Enter" || k === " "){
+        e.preventDefault();
+        nextQuestion();
+      }
+    } else if(!els.startScreen.hidden && (e.key === "Enter")){
+      startGame();
+    }
+  });
+
+  var best0 = getBest();
+  if(best0 !== null){
+    els.bestScoreLine.hidden = false;
+    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + ITEMS.length;
+  }
+
+  function snapshot(){
+    return {
+      screen: els.startScreen.hidden ? (els.endScreen.hidden ? "game" : "end") : "start",
+      order: order, index: index, score: score, tally: tally, misses: misses
+    };
+  }
+  function boot(data){
+    if(data && data.order && data.order.length){
+      order = data.order; index = data.index || 0; score = data.score || 0;
+      tally = data.tally || tally; misses = data.misses || [];
+      if(data.screen === "end"){ endGame(); }
+      else if(data.screen === "game"){ showScreen("game"); renderQuestion(); }
+      else { showScreen("start"); }
+    } else {
+      showScreen("start");
+    }
+  }
+  if(window.claude && window.claude.hot){
+    window.claude.hot.snapshot(snapshot);
+    window.claude.hot.ready ? window.claude.hot.ready(boot) : boot(window.claude.hot.data);
+  } else {
+    showScreen("start");
+  }
+})();
+</script>
+</body>
+</html>
