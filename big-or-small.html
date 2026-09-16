@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Big or Small</title>
-<meta name="description" content="A 50-question picture quiz comparing big/small, tall/short, and long/short.">
+<meta name="description" content="A 50-question picture quiz comparing two things at a time: which is bigger/smaller, taller/shorter, or longer/shorter.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📏</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -17,8 +17,7 @@
     --ink:#2b3a45;
     --ink-dim:#5c7181;
     --ink-faint:#8298a6;
-    --more:#ff8a5c;
-    --less:#3fb8b0;
+    --accent:#2f6f8f;
     --correct:#4caf50;
     --wrong:#ef5757;
     --panel:#ffffff;
@@ -83,7 +82,7 @@
     font-size:clamp(2.4rem, 7.5vw, 3.3rem);
     margin:0;
     line-height:1;
-    color:#2f6f8f;
+    color:var(--accent);
   }
   .subtitle{
     color:var(--ink-dim);
@@ -125,7 +124,7 @@
     inset:0;
     width:100%;
     height:100%;
-    background:linear-gradient(90deg, var(--more), var(--less));
+    background:linear-gradient(90deg, #ff8a5c, #3fb8b0);
     border-radius:999px;
     transform:scaleX(0);
     transform-origin:left;
@@ -135,7 +134,7 @@
   .panel, .card{
     border:3px solid rgba(43,58,69,0.12);
     border-radius:22px;
-    padding:30px 24px 26px;
+    padding:26px 24px 24px;
     text-align:center;
     background:var(--panel);
     box-shadow:0 10px 24px rgba(43,58,69,0.08);
@@ -153,16 +152,12 @@
     color:var(--ink-dim);
     margin-bottom:10px;
   }
-  .q-emoji{
-    font-size:5rem;
-    line-height:1;
-    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.15));
-  }
-  .q-name{
+  .q-question{
     font-family:"Baloo 2", cursive;
-    font-weight:700;
-    font-size:clamp(1.7rem, 5.5vw, 2.2rem);
-    margin:8px 0 0;
+    font-weight:800;
+    font-size:clamp(1.8rem, 6.5vw, 2.4rem);
+    margin:0;
+    color:var(--accent);
     text-wrap:balance;
   }
 
@@ -186,6 +181,7 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
+    align-items:stretch;
   }
   @media (max-width:420px){
     .answers{ grid-template-columns:1fr; }
@@ -193,30 +189,30 @@
   .answer-btn{
     font-family:"IBM Plex Sans", sans-serif;
     font-weight:700;
-    font-size:1.15rem;
+    font-size:1.05rem;
     color:var(--ink);
-    background:var(--tone, var(--ink-faint));
-    border:4px solid rgba(255,255,255,0.65);
+    background:var(--panel);
+    border:4px solid rgba(43,58,69,0.15);
     border-radius:26px;
-    padding:20px 10px 16px;
+    padding:22px 10px 18px;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:6px;
+    gap:8px;
     cursor:pointer;
-    box-shadow:0 6px 0 rgba(0,0,0,0.18);
-    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow:0 6px 0 rgba(0,0,0,0.1);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
-  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); }
-  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.18); }
+  .answer-btn:hover{ transform:translateY(-3px) scale(1.03); border-color:var(--accent); }
+  .answer-btn:active{ transform:translateY(2px) scale(0.98); box-shadow:0 2px 0 rgba(0,0,0,0.1); }
   .answer-btn:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
-  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
-  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--wrong); }
-  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.18), 0 0 0 4px var(--correct); }
+  .answer-btn.chosen-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.1), 0 0 0 4px var(--correct); border-color:var(--correct); }
+  .answer-btn.chosen-wrong{ box-shadow:0 6px 0 rgba(0,0,0,0.1), 0 0 0 4px var(--wrong); border-color:var(--wrong); }
+  .answer-btn.reveal-correct{ box-shadow:0 6px 0 rgba(0,0,0,0.1), 0 0 0 4px var(--correct); border-color:var(--correct); }
   .answer-btn:disabled{ cursor:default; }
-  .answer-btn:disabled:hover{ transform:none; }
+  .answer-btn:disabled:hover{ transform:none; border-color:rgba(43,58,69,0.15); }
 
-  .answer-icon{ font-size:2.6rem; line-height:1; }
+  .answer-icon{ font-size:3.4rem; line-height:1; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12)); }
   @media (prefers-reduced-motion:no-preference){
     .answer-btn:hover .answer-icon{ animation:jiggle 0.5s ease-in-out; }
   }
@@ -226,12 +222,21 @@
     75%{ transform:rotate(8deg); }
   }
 
+  .vs{
+    font-family:"Baloo 2", cursive;
+    font-weight:800;
+    color:var(--ink-faint);
+    font-size:1.1rem;
+    text-align:center;
+    margin:-2px 0;
+  }
+
   .primary-btn{
     font-family:"IBM Plex Sans", sans-serif;
     font-weight:700;
     font-size:1rem;
     color:#fff;
-    background:#2f6f8f;
+    background:var(--accent);
     border:none;
     border-radius:14px;
     padding:13px 22px;
@@ -301,7 +306,7 @@
     font-weight:800;
     font-size:clamp(2.3rem, 7.5vw, 3rem);
     margin:0;
-    color:#2f6f8f;
+    color:var(--accent);
   }
   .score-big{
     font-family:"IBM Plex Mono", monospace;
@@ -338,18 +343,18 @@
   <header>
     <a class="breadcrumb" href="index.html">← The Sorting Shelf</a>
     <h1>Big or Small</h1>
-    <p class="subtitle" id="subtitle">Is it big or small? Tall or short? Long or short? Let's find out!</p>
+    <p class="subtitle" id="subtitle">Which one is bigger? Taller? Longer? Let's find out!</p>
   </header>
 
   <!-- START SCREEN -->
   <section class="panel" id="startScreen">
     <p style="margin:0; color:var(--ink-dim); max-width:46ch;">
-      We'll show you something. You tap the right size!
+      We'll show you two things. You tap the one the question asks for!
     </p>
     <div class="legend">
-      <span>🐘 Big</span><span>🐜 Small</span>
-      <span>🦒 Tall</span><span>🍄 Short</span>
-      <span>🐍 Long</span><span>✏️ Short</span>
+      <span>🐘 vs 🐜 — Big or Small</span>
+      <span>🦒 vs 🍄 — Tall or Short</span>
+      <span>🐍 vs ✏️ — Long or Short</span>
     </div>
     <p class="best" id="bestScoreLine" hidden></p>
     <button class="primary-btn" id="startBtn">Let's Play! →</button>
@@ -365,19 +370,18 @@
 
     <div class="card" id="card">
       <p class="q-tag" id="qTag">Question No. 001</p>
-      <div class="q-emoji" id="qEmoji">🐘</div>
-      <p class="q-name" id="qName">Elephant</p>
+      <p class="q-question" id="qQuestion">Which one is BIGGER?</p>
       <p class="feedback" id="feedback"></p>
     </div>
 
     <div class="answers" id="answers">
       <button class="answer-btn" id="btnA" data-slot="a">
         <span class="answer-icon" id="iconA">🐘</span>
-        <span class="answer-label" id="labelA">Big</span>
+        <span class="answer-label" id="labelA">Elephant</span>
       </button>
       <button class="answer-btn" id="btnB" data-slot="b">
         <span class="answer-icon" id="iconB">🐜</span>
-        <span class="answer-label" id="labelB">Small</span>
+        <span class="answer-label" id="labelB">Ant</span>
       </button>
     </div>
 
@@ -410,66 +414,65 @@
 (function(){
   "use strict";
 
-  var AXES = {
-    size:   {a:{key:"big",   label:"Big",   icon:"🐘"}, b:{key:"small",  label:"Small", icon:"🐜"}},
-    height: {a:{key:"tall",  label:"Tall",  icon:"🦒"}, b:{key:"short_h",label:"Short", icon:"🍄"}},
-    length: {a:{key:"long",  label:"Long",  icon:"🐍"}, b:{key:"short_l",label:"Short", icon:"✏️"}}
+  var AXIS_WORDS = {
+    size:   {more:"BIGGER", less:"SMALLER", label:"Big / Small"},
+    height: {more:"TALLER", less:"SHORTER", label:"Tall / Short"},
+    length: {more:"LONGER", less:"SHORTER", label:"Long / Short"}
   };
-  var AXIS_LABEL = {size:"Big / Small", height:"Tall / Short", length:"Long / Short"};
 
-  var ITEMS = [
-    {e:"🐘", n:"Elephant", axis:"size", ans:"big", f:"An elephant is huge! It's a BIG animal."},
-    {e:"🐋", n:"Whale", axis:"size", ans:"big", f:"A whale is enormous! It's the BIGGEST animal in the sea."},
-    {e:"🦖", n:"Dinosaur", axis:"size", ans:"big", f:"Dinosaurs were giant! They were BIG."},
-    {e:"🚚", n:"Truck", axis:"size", ans:"big", f:"A truck is much bigger than a car. It's BIG."},
-    {e:"🏠", n:"House", axis:"size", ans:"big", f:"A house is big enough for a whole family. It's BIG."},
-    {e:"⛰️", n:"Mountain", axis:"size", ans:"big", f:"A mountain is bigger than anything around it. It's BIG."},
-    {e:"✈️", n:"Airplane", axis:"size", ans:"big", f:"An airplane is huge, with room for lots of people. It's BIG."},
-    {e:"🚢", n:"Ship", axis:"size", ans:"big", f:"A big ship can carry hundreds of people. It's BIG."},
-    {e:"🚌", n:"School Bus", axis:"size", ans:"big", f:"A school bus is big enough for many kids. It's BIG."},
-    {e:"🐜", n:"Ant", axis:"size", ans:"small", f:"An ant is tiny! It's a SMALL bug."},
-    {e:"🐞", n:"Ladybug", axis:"size", ans:"small", f:"A ladybug fits on your fingertip. It's SMALL."},
-    {e:"🐭", n:"Mouse", axis:"size", ans:"small", f:"A mouse is little and quick. It's SMALL."},
-    {e:"🔘", n:"Button", axis:"size", ans:"small", f:"A button is tiny enough to fit through a buttonhole. It's SMALL."},
-    {e:"🫘", n:"Bean", axis:"size", ans:"small", f:"A bean fits in the palm of your hand. It's SMALL."},
-    {e:"🍚", n:"Grain of Rice", axis:"size", ans:"small", f:"A grain of rice is one of the tiniest foods. It's SMALL."},
-    {e:"🪙", n:"Coin", axis:"size", ans:"small", f:"A coin is small enough to fit in your pocket. It's SMALL."},
-    {e:"🐌", n:"Snail", axis:"size", ans:"small", f:"A snail is small and slow. It's SMALL."},
+  var PAIRS = [
+    {axis:"size", more:{e:"🐘", n:"Elephant", f:"An elephant is huge! It's much BIGGER."}, less:{e:"🐜", n:"Ant", f:"An ant is tiny! It's much SMALLER."}},
+    {axis:"size", more:{e:"🐋", n:"Whale", f:"A whale is enormous! It's much BIGGER."}, less:{e:"🐠", n:"Goldfish", f:"A goldfish is little! It's much SMALLER."}},
+    {axis:"size", more:{e:"🦖", n:"Dinosaur", f:"Dinosaurs were giant! It's much BIGGER."}, less:{e:"🐭", n:"Mouse", f:"A mouse is small and quick! It's much SMALLER."}},
+    {axis:"size", more:{e:"⛰️", n:"Mountain", f:"A mountain towers over everything! It's much BIGGER."}, less:{e:"🪨", n:"Pebble", f:"A pebble fits in your hand! It's much SMALLER."}},
+    {axis:"size", more:{e:"🚢", n:"Ship", f:"A big ship carries hundreds of people! It's much BIGGER."}, less:{e:"🛶", n:"Toy Boat", f:"A toy boat fits in a bathtub! It's much SMALLER."}},
+    {axis:"size", more:{e:"🦛", n:"Hippopotamus", f:"A hippo is huge and heavy! It's much BIGGER."}, less:{e:"🐞", n:"Ladybug", f:"A ladybug fits on your fingertip! It's much SMALLER."}},
+    {axis:"size", more:{e:"🐻", n:"Bear", f:"A bear is big and strong! It's much BIGGER."}, less:{e:"🦋", n:"Butterfly", f:"A butterfly is light and little! It's much SMALLER."}},
+    {axis:"size", more:{e:"🍉", n:"Watermelon", f:"A watermelon takes two hands to hold! It's much BIGGER."}, less:{e:"🫐", n:"Blueberry", f:"A blueberry is a tiny bite! It's much SMALLER."}},
+    {axis:"size", more:{e:"🎃", n:"Pumpkin", f:"A pumpkin is big and round! It's much BIGGER."}, less:{e:"🫛", n:"Pea Pod", f:"A pea pod is small and thin! It's much SMALLER."}},
+    {axis:"size", more:{e:"🚌", n:"School Bus", f:"A school bus holds a whole class! It's much BIGGER."}, less:{e:"🛹", n:"Skateboard", f:"A skateboard is small enough to carry! It's much SMALLER."}},
+    {axis:"size", more:{e:"🛋️", n:"Sofa", f:"A sofa seats a whole family! It's much BIGGER."}, less:{e:"🪑", n:"Stool", f:"A little stool is small and simple! It's much SMALLER."}},
+    {axis:"size", more:{e:"✈️", n:"Airplane", f:"An airplane carries hundreds of people! It's much BIGGER."}, less:{e:"🪁", n:"Kite", f:"A kite is light enough to fly on a string! It's much SMALLER."}},
+    {axis:"size", more:{e:"🦍", n:"Gorilla", f:"A gorilla is big and powerful! It's much BIGGER."}, less:{e:"🐹", n:"Hamster", f:"A hamster fits in two hands! It's much SMALLER."}},
+    {axis:"size", more:{e:"🚚", n:"Truck", f:"A truck is much bigger than a bike! It's much BIGGER."}, less:{e:"🚲", n:"Bicycle", f:"A bicycle is small enough to ride! It's much SMALLER."}},
+    {axis:"size", more:{e:"⚽", n:"Beach Ball", f:"A beach ball is big and puffy! It's much BIGGER."}, less:{e:"🔘", n:"Button", f:"A button is tiny and flat! It's much SMALLER."}},
+    {axis:"size", more:{e:"🌴", n:"Palm Tree", f:"A palm tree grows way up tall! It's much BIGGER."}, less:{e:"🌱", n:"Seedling", f:"A seedling just barely sprouted! It's much SMALLER."}},
 
-    {e:"🦒", n:"Giraffe", axis:"height", ans:"tall", f:"A giraffe has a very long neck. It's TALL!"},
-    {e:"🌳", n:"Tree", axis:"height", ans:"tall", f:"A tree grows way up into the sky. It's TALL!"},
-    {e:"🏢", n:"Skyscraper", axis:"height", ans:"tall", f:"A skyscraper reaches way up high. It's TALL!"},
-    {e:"🗼", n:"Tower", axis:"height", ans:"tall", f:"A tower stretches way up into the sky. It's TALL!"},
-    {e:"🪜", n:"Ladder", axis:"height", ans:"tall", f:"A tall ladder helps you reach way up high. It's TALL!"},
-    {e:"🏗️", n:"Crane", axis:"height", ans:"tall", f:"A construction crane towers over buildings. It's TALL!"},
-    {e:"🚩", n:"Flagpole", axis:"height", ans:"tall", f:"A flagpole stands way up high. It's TALL!"},
-    {e:"🚦", n:"Traffic Light", axis:"height", ans:"tall", f:"A traffic light stands up high on its pole. It's TALL!"},
-    {e:"🍄", n:"Mushroom", axis:"height", ans:"short_h", f:"A mushroom grows low to the ground. It's SHORT."},
-    {e:"🐢", n:"Turtle", axis:"height", ans:"short_h", f:"A turtle is low and close to the ground. It's SHORT."},
-    {e:"🐸", n:"Frog", axis:"height", ans:"short_h", f:"A frog sits low to the ground. It's SHORT."},
-    {e:"🐶", n:"Puppy", axis:"height", ans:"short_h", f:"A puppy is small and close to the ground. It's SHORT."},
-    {e:"🦆", n:"Duck", axis:"height", ans:"short_h", f:"A duck waddles low to the ground. It's SHORT."},
-    {e:"🦔", n:"Hedgehog", axis:"height", ans:"short_h", f:"A hedgehog is tiny and low to the ground. It's SHORT."},
-    {e:"🐧", n:"Penguin", axis:"height", ans:"short_h", f:"A penguin waddles on short little legs. It's SHORT."},
-    {e:"🐰", n:"Bunny", axis:"height", ans:"short_h", f:"A bunny is small and close to the ground. It's SHORT."},
-    {e:"🪑", n:"Stool", axis:"height", ans:"short_h", f:"A little stool sits low to the ground. It's SHORT."},
+    {axis:"height", more:{e:"🦒", n:"Giraffe", f:"A giraffe has a very long neck! It's much TALLER."}, less:{e:"🐢", n:"Turtle", f:"A turtle is low to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🏢", n:"Skyscraper", f:"A skyscraper reaches way up high! It's much TALLER."}, less:{e:"🍄", n:"Mushroom", f:"A mushroom grows low to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🌳", n:"Tree", f:"A tree grows way up into the sky! It's much TALLER."}, less:{e:"🍀", n:"Clover", f:"A clover grows close to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🗼", n:"Lighthouse", f:"A lighthouse stands tall by the sea! It's much TALLER."}, less:{e:"🐸", n:"Frog", f:"A frog sits low to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🪜", n:"Ladder", f:"A tall ladder reaches way up! It's much TALLER."}, less:{e:"🪑", n:"Stool", f:"A little stool sits low down! It's much SHORTER."}},
+    {axis:"height", more:{e:"🚩", n:"Flagpole", f:"A flagpole stands way up high! It's much TALLER."}, less:{e:"🐰", n:"Bunny", f:"A bunny is small and close to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🏗️", n:"Crane", f:"A construction crane towers over buildings! It's much TALLER."}, less:{e:"🐶", n:"Puppy", f:"A puppy is small and close to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🚦", n:"Traffic Light", f:"A traffic light stands up high on its pole! It's much TALLER."}, less:{e:"🦆", n:"Duck", f:"A duck waddles low to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🧍", n:"Grown-Up", f:"A grown-up stands up nice and tall! It's much TALLER."}, less:{e:"👶", n:"Baby", f:"A baby is still tiny and small! It's much SHORTER."}},
+    {axis:"height", more:{e:"🎡", n:"Ferris Wheel", f:"A ferris wheel towers over the fair! It's much TALLER."}, less:{e:"🐧", n:"Penguin", f:"A penguin waddles on short little legs! It's much SHORTER."}},
+    {axis:"height", more:{e:"🌴", n:"Palm Tree", f:"A palm tree grows way up tall! It's much TALLER."}, less:{e:"🦔", n:"Hedgehog", f:"A hedgehog is tiny and low to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🐪", n:"Camel", f:"A camel stands tall on long legs! It's much TALLER."}, less:{e:"🐌", n:"Snail", f:"A snail creeps along close to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🦩", n:"Flamingo", f:"A flamingo stands tall on one leg! It's much TALLER."}, less:{e:"🐥", n:"Chick", f:"A baby chick is tiny and short! It's much SHORTER."}},
+    {axis:"height", more:{e:"📡", n:"Antenna", f:"An antenna reaches way up high! It's much TALLER."}, less:{e:"🐭", n:"Mouse", f:"A mouse is low and close to the ground! It's much SHORTER."}},
+    {axis:"height", more:{e:"🌻", n:"Sunflower", f:"A sunflower grows tall toward the sun! It's much TALLER."}, less:{e:"🐞", n:"Ladybug", f:"A ladybug is tiny and low down! It's much SHORTER."}},
+    {axis:"height", more:{e:"🦘", n:"Kangaroo", f:"A kangaroo stands tall on two legs! It's much TALLER."}, less:{e:"🐹", n:"Hamster", f:"A hamster is small and low down! It's much SHORTER."}},
+    {axis:"height", more:{e:"🏀", n:"Basketball Hoop", f:"A basketball hoop is high up on its pole! It's much TALLER."}, less:{e:"🐕", n:"Small Dog", f:"A small dog is short and close to the ground! It's much SHORTER."}},
 
-    {e:"🐍", n:"Snake", axis:"length", ans:"long", f:"A snake's body stretches way out. It's LONG!"},
-    {e:"🚂", n:"Train", axis:"length", ans:"long", f:"A train has so many cars all in a row. It's LONG!"},
-    {e:"🧣", n:"Scarf", axis:"length", ans:"long", f:"A scarf wraps all the way around your neck. It's LONG!"},
-    {e:"🪢", n:"Rope", axis:"length", ans:"long", f:"A rope stretches out really far. It's LONG!"},
-    {e:"📏", n:"Ruler", axis:"length", ans:"long", f:"A long ruler stretches out to measure big things. It's LONG!"},
-    {e:"🐊", n:"Alligator", axis:"length", ans:"long", f:"An alligator has a long body and a long tail. It's LONG!"},
-    {e:"🐛", n:"Caterpillar", axis:"length", ans:"long", f:"A caterpillar's body stretches out long. It's LONG!"},
-    {e:"🥖", n:"Baguette", axis:"length", ans:"long", f:"A baguette is a loaf of bread that stretches out long. It's LONG!"},
-    {e:"✏️", n:"Pencil", axis:"length", ans:"short_l", f:"A little pencil fits in your hand. It's SHORT."},
-    {e:"🧦", n:"Sock", axis:"length", ans:"short_l", f:"A sock only covers your foot and ankle. It's SHORT."},
-    {e:"🪵", n:"Twig", axis:"length", ans:"short_l", f:"A little twig snapped off a branch. It's SHORT."},
-    {e:"🖍️", n:"Crayon", axis:"length", ans:"short_l", f:"A crayon is short enough to hold in your fist. It's SHORT."},
-    {e:"📎", n:"Paperclip", axis:"length", ans:"short_l", f:"A paperclip is tiny and short. It's SHORT."},
-    {e:"🔑", n:"Key", axis:"length", ans:"short_l", f:"A key is short enough to fit on a keyring. It's SHORT."},
-    {e:"🥄", n:"Spoon", axis:"length", ans:"short_l", f:"A spoon is short enough to hold while you eat. It's SHORT."},
-    {e:"🪥", n:"Toothbrush", axis:"length", ans:"short_l", f:"A toothbrush is short enough to hold in your hand. It's SHORT."}
+    {axis:"length", more:{e:"🐍", n:"Snake", f:"A snake's body stretches way out! It's much LONGER."}, less:{e:"🐞", n:"Ladybug", f:"A ladybug is round and tiny! It's much SHORTER."}},
+    {axis:"length", more:{e:"🚂", n:"Train", f:"A train has so many cars in a row! It's much LONGER."}, less:{e:"🎲", n:"Dice", f:"A die is just a little cube! It's much SHORTER."}},
+    {axis:"length", more:{e:"🐊", n:"Alligator", f:"An alligator has a long body and tail! It's much LONGER."}, less:{e:"🐸", n:"Frog", f:"A frog is small and round! It's much SHORTER."}},
+    {axis:"length", more:{e:"🧣", n:"Scarf", f:"A scarf wraps all the way around your neck! It's much LONGER."}, less:{e:"🎀", n:"Bow", f:"A little bow is small and neat! It's much SHORTER."}},
+    {axis:"length", more:{e:"🪢", n:"Rope", f:"A rope stretches out really far! It's much LONGER."}, less:{e:"📎", n:"Paperclip", f:"A paperclip is tiny and short! It's much SHORTER."}},
+    {axis:"length", more:{e:"📏", n:"Ruler", f:"A long ruler stretches out to measure big things! It's much LONGER."}, less:{e:"🔑", n:"Key", f:"A key is short enough for a keyring! It's much SHORTER."}},
+    {axis:"length", more:{e:"🐛", n:"Caterpillar", f:"A caterpillar's body stretches out long! It's much LONGER."}, less:{e:"🐜", n:"Ant", f:"An ant's body is small and short! It's much SHORTER."}},
+    {axis:"length", more:{e:"🥖", n:"Baguette", f:"A baguette is a loaf of bread that stretches out long! It's much LONGER."}, less:{e:"🍘", n:"Cracker", f:"A cracker is small and round! It's much SHORTER."}},
+    {axis:"length", more:{e:"🚿", n:"Garden Hose", f:"A garden hose stretches across the whole yard! It's much LONGER."}, less:{e:"🪥", n:"Toothbrush", f:"A toothbrush is short enough to hold! It's much SHORTER."}},
+    {axis:"length", more:{e:"🪁", n:"Kite String", f:"A kite string stretches way up to the sky! It's much LONGER."}, less:{e:"🔘", n:"Button", f:"A button is tiny and flat! It's much SHORTER."}},
+    {axis:"length", more:{e:"📿", n:"Necklace", f:"A necklace loops all the way around your neck! It's much LONGER."}, less:{e:"💍", n:"Ring", f:"A ring fits around just one finger! It's much SHORTER."}},
+    {axis:"length", more:{e:"🪱", n:"Earthworm", f:"An earthworm's body stretches out long! It's much LONGER."}, less:{e:"🐌", n:"Snail", f:"A snail's body curls up short! It's much SHORTER."}},
+    {axis:"length", more:{e:"🎣", n:"Fishing Rod", f:"A fishing rod stretches way out! It's much LONGER."}, less:{e:"🥄", n:"Spoon", f:"A spoon is short enough to hold while you eat! It's much SHORTER."}},
+    {axis:"length", more:{e:"🧹", n:"Broom", f:"A broom has a long handle to reach the floor! It's much LONGER."}, less:{e:"🍴", n:"Fork", f:"A fork is short enough to hold in your hand! It's much SHORTER."}},
+    {axis:"length", more:{e:"🛝", n:"Waterslide", f:"A waterslide stretches all the way down! It's much LONGER."}, less:{e:"🧦", n:"Sock", f:"A sock only covers your foot and ankle! It's much SHORTER."}},
+    {axis:"length", more:{e:"🛣️", n:"Highway", f:"A highway stretches on for miles! It's much LONGER."}, less:{e:"🪙", n:"Coin", f:"A coin is small and round! It's much SHORTER."}},
+    {axis:"length", more:{e:"🪶", n:"Peacock Feather", f:"A peacock feather trails out long! It's much LONGER."}, less:{e:"✏️", n:"Pencil", f:"A little pencil fits in your hand! It's much SHORTER."}}
   ];
 
   var els = {
@@ -485,8 +488,7 @@
     scoreChip: document.getElementById("scoreChip"),
     card: document.getElementById("card"),
     qTag: document.getElementById("qTag"),
-    qEmoji: document.getElementById("qEmoji"),
-    qName: document.getElementById("qName"),
+    qQuestion: document.getElementById("qQuestion"),
     feedback: document.getElementById("feedback"),
     btnA: document.getElementById("btnA"),
     btnB: document.getElementById("btnB"),
@@ -524,6 +526,7 @@
   }
 
   var order = [];
+  var plan = [];
   var index = 0;
   var score = 0;
   var answered = false;
@@ -539,14 +542,17 @@
     els.gameScreen.hidden = name !== "game";
     els.endScreen.hidden = name !== "end";
     els.subtitle.textContent = name === "start"
-      ? "Is it big or small? Tall or short? Long or short? Let's find out!"
+      ? "Which one is bigger? Taller? Longer? Let's find out!"
       : name === "game"
-        ? "What do you think this is?"
+        ? "Tap the one the question asks for."
         : "All done! Let's see how you did.";
   }
 
   function startGame(){
-    order = shuffle(ITEMS.map(function(_, i){ return i; }));
+    order = shuffle(PAIRS.map(function(_, i){ return i; }));
+    plan = order.map(function(){
+      return { askMore: Math.random() < 0.5, swap: Math.random() < 0.5 };
+    });
     index = 0;
     score = 0;
     misses = [];
@@ -557,29 +563,32 @@
 
   function renderQuestion(){
     answered = false;
-    var item = ITEMS[order[index]];
-    var opts = AXES[item.axis];
+    var pair = PAIRS[order[index]];
+    var p = plan[index];
+    var words = AXIS_WORDS[pair.axis];
+
     els.qTag.textContent = "Question No. " + String(index + 1).padStart(3, "0");
-    els.qEmoji.textContent = item.e;
-    els.qName.textContent = item.n;
+    els.qQuestion.textContent = "Which one is " + (p.askMore ? words.more : words.less) + "?";
     els.feedback.textContent = "";
     els.feedback.className = "feedback";
     els.card.classList.remove("correct", "wrong");
-    els.qCount.innerHTML = "Question " + (index + 1) + " / " + ITEMS.length;
-    els.progressFill.style.transform = "scaleX(" + (index / ITEMS.length) + ")";
+    els.qCount.innerHTML = "Question " + (index + 1) + " / " + PAIRS.length;
+    els.progressFill.style.transform = "scaleX(" + (index / PAIRS.length) + ")";
     els.scoreChip.textContent = score;
     els.nextBtn.disabled = true;
-    els.nextBtn.textContent = (index === ITEMS.length - 1) ? "See results →" : "Next question →";
+    els.nextBtn.textContent = (index === PAIRS.length - 1) ? "See results →" : "Next question →";
 
-    els.iconA.textContent = opts.a.icon;
-    els.labelA.textContent = opts.a.label;
-    els.btnA.style.setProperty("--tone", "var(--more)");
-    els.btnA.setAttribute("data-key", opts.a.key);
+    var left = p.swap ? pair.less : pair.more;
+    var right = p.swap ? pair.more : pair.less;
+    var leftIsMore = !p.swap;
 
-    els.iconB.textContent = opts.b.icon;
-    els.labelB.textContent = opts.b.label;
-    els.btnB.style.setProperty("--tone", "var(--less)");
-    els.btnB.setAttribute("data-key", opts.b.key);
+    els.iconA.textContent = left.e;
+    els.labelA.textContent = left.n;
+    els.btnA.setAttribute("data-is-more", leftIsMore ? "1" : "0");
+
+    els.iconB.textContent = right.e;
+    els.labelB.textContent = right.n;
+    els.btnB.setAttribute("data-is-more", leftIsMore ? "0" : "1");
 
     [els.btnA, els.btnB].forEach(function(btn){
       btn.disabled = false;
@@ -587,31 +596,36 @@
     });
   }
 
-  function submitAnswer(chosenKey){
+  function submitAnswer(chosenIsMore){
     if(answered) return;
     answered = true;
-    var item = ITEMS[order[index]];
-    var correct = chosenKey === item.ans;
+    var pair = PAIRS[order[index]];
+    var p = plan[index];
+    var wantMore = p.askMore;
+    var correct = (chosenIsMore === "1") === wantMore;
+    var correctItem = wantMore ? pair.more : pair.less;
+    var otherItem = wantMore ? pair.less : pair.more;
 
-    tally[item.axis].total++;
+    tally[pair.axis].total++;
     if(correct){
       score++;
-      tally[item.axis].correct++;
+      tally[pair.axis].correct++;
     } else {
-      misses.push(item);
+      misses.push({e:correctItem.e, n:correctItem.n, vs:otherItem.n, axis:pair.axis, askMore:wantMore});
     }
 
     els.scoreChip.textContent = score;
     els.card.classList.add(correct ? "correct" : "wrong");
     els.feedback.className = "feedback " + (correct ? "correct" : "wrong");
-    els.feedback.innerHTML = "<span class=\"verdict\">" + (correct ? "✓ Correct!" : "✕ Not quite") + "</span>" + item.f;
+    els.feedback.innerHTML = "<span class=\"verdict\">" + (correct ? "✓ Correct!" : "✕ Not quite") + "</span>" + correctItem.f;
 
     [els.btnA, els.btnB].forEach(function(btn){
       btn.disabled = true;
-      var key = btn.getAttribute("data-key");
-      if(key === item.ans){
+      var btnIsMore = btn.getAttribute("data-is-more");
+      var btnIsCorrect = (btnIsMore === "1") === wantMore;
+      if(btnIsCorrect){
         btn.classList.add(correct ? "chosen-correct" : "reveal-correct");
-      } else if(key === chosenKey){
+      } else if(btnIsMore === chosenIsMore){
         btn.classList.add("chosen-wrong");
       }
     });
@@ -621,7 +635,7 @@
   }
 
   function nextQuestion(){
-    if(index >= ITEMS.length - 1){
+    if(index >= PAIRS.length - 1){
       endGame();
       return;
     }
@@ -642,7 +656,7 @@
 
   function endGame(){
     els.progressFill.style.transform = "scaleX(1)";
-    var pct = (score / ITEMS.length) * 100;
+    var pct = (score / PAIRS.length) * 100;
     els.gradeLine.textContent = gradeFor(pct);
     els.finalScore.textContent = score;
     els.tallySize.textContent = tally.size.correct + "/" + tally.size.total;
@@ -656,7 +670,7 @@
       els.bestScoreLineEnd.textContent = "★ New best score!";
     } else {
       els.bestScoreLineEnd.hidden = false;
-      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + ITEMS.length;
+      els.bestScoreLineEnd.textContent = "Best score so far: " + best + " / " + PAIRS.length;
     }
     els.reviewBtn.hidden = misses.length === 0;
     showScreen("end");
@@ -665,15 +679,15 @@
   function reviewMisses(){
     if(misses.length === 0) return;
     var text = misses.map(function(m){
-      var opts = AXES[m.axis];
-      var correctLabel = (m.ans === opts.a.key) ? opts.a.label : opts.b.label;
-      return m.e + " " + m.n + " — " + correctLabel;
+      var words = AXIS_WORDS[m.axis];
+      var word = m.askMore ? words.more : words.less;
+      return m.e + " " + m.n + " was the " + word + " one (vs " + m.vs + ")";
     }).join("\n");
     alert("Questions you missed:\n\n" + text);
   }
 
-  els.btnA.addEventListener("click", function(){ submitAnswer(els.btnA.getAttribute("data-key")); });
-  els.btnB.addEventListener("click", function(){ submitAnswer(els.btnB.getAttribute("data-key")); });
+  els.btnA.addEventListener("click", function(){ submitAnswer(els.btnA.getAttribute("data-is-more")); });
+  els.btnB.addEventListener("click", function(){ submitAnswer(els.btnB.getAttribute("data-is-more")); });
   els.nextBtn.addEventListener("click", nextQuestion);
   els.startBtn.addEventListener("click", startGame);
   els.playAgainBtn.addEventListener("click", startGame);
@@ -683,8 +697,8 @@
     if(!els.gameScreen.hidden){
       var k = e.key.toLowerCase();
       if(!answered){
-        if(k === "1" || k === "a") submitAnswer(els.btnA.getAttribute("data-key"));
-        else if(k === "2" || k === "b") submitAnswer(els.btnB.getAttribute("data-key"));
+        if(k === "1" || k === "a") submitAnswer(els.btnA.getAttribute("data-is-more"));
+        else if(k === "2" || k === "b") submitAnswer(els.btnB.getAttribute("data-is-more"));
       } else if(k === "enter" || k === " "){
         e.preventDefault();
         nextQuestion();
@@ -697,18 +711,19 @@
   var best0 = getBest();
   if(best0 !== null){
     els.bestScoreLine.hidden = false;
-    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + ITEMS.length;
+    els.bestScoreLine.textContent = "Best score so far: " + best0 + " / " + PAIRS.length;
   }
 
   function snapshot(){
     return {
       screen: els.startScreen.hidden ? (els.endScreen.hidden ? "game" : "end") : "start",
-      order: order, index: index, score: score, tally: tally, misses: misses
+      order: order, plan: plan, index: index, score: score, tally: tally, misses: misses
     };
   }
   function boot(data){
     if(data && data.order && data.order.length){
-      order = data.order; index = data.index || 0; score = data.score || 0;
+      order = data.order; plan = data.plan || order.map(function(){ return {askMore:true, swap:false}; });
+      index = data.index || 0; score = data.score || 0;
       tally = data.tally || tally; misses = data.misses || [];
       if(data.screen === "end"){ endGame(); }
       else if(data.screen === "game"){ showScreen("game"); renderQuestion(); }
